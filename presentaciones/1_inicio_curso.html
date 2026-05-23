@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clase 1 · Python + IA para Ciencia de Datos · Trabajo Científico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d1b18;          /* verde-tinta muy oscuro */
+    --paper:#f5efe4;        /* papel cálido */
+    --moss:#1f5d4c;         /* verde musgo */
+    --moss-bright:#2e8b6f;
+    --lime:#c8f25a;         /* acento lima eléctrico */
+    --clay:#e8623d;         /* terracota acento */
+    --amber:#f2b134;
+    --sky:#5ec8e0;
+    --line:rgba(13,27,24,.14);
+    --shadow:0 18px 50px -20px rgba(13,27,24,.45);
+    --serif:'Fraunces',Georgia,serif;
+    --sans:'Archivo',sans-serif;
+    --mono:'Space Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    background:var(--ink);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ====== DECK & SLIDE SYSTEM ====== */
+  .deck{position:fixed;inset:0;}
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    justify-content:center;
+    padding:6vh 7vw;
+    opacity:0;visibility:hidden;
+    transform:scale(1.04);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), visibility .55s;
+    overflow:hidden;
+    background:var(--paper);
+  }
+  .slide.active{opacity:1;visibility:visible;transform:scale(1);z-index:2}
+  .slide.dark{background:var(--ink);color:var(--paper)}
+  .slide.moss{background:var(--moss);color:var(--paper)}
+
+  /* grain overlay */
+  .slide::after{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:multiply;
+  }
+  .slide.dark::after,.slide.moss::after{mix-blend-mode:screen;opacity:.06}
+
+  /* staggered reveal */
+  .slide.active .reveal{animation:rise .7s cubic-bezier(.2,.85,.25,1) backwards}
+  .slide.active .reveal:nth-child(1){animation-delay:.05s}
+  .slide.active .reveal:nth-child(2){animation-delay:.15s}
+  .slide.active .reveal:nth-child(3){animation-delay:.25s}
+  .slide.active .reveal:nth-child(4){animation-delay:.35s}
+  .slide.active .reveal:nth-child(5){animation-delay:.45s}
+  .slide.active .reveal:nth-child(6){animation-delay:.55s}
+  @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+  .kicker{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--moss);display:inline-flex;align-items:center;gap:.6em;margin-bottom:1.4rem;
+  }
+  .dark .kicker,.moss .kicker{color:var(--lime)}
+  .kicker::before{content:"";width:34px;height:2px;background:currentColor;display:inline-block}
+
+  h1{font-family:var(--serif);font-weight:900;line-height:.98;letter-spacing:-.02em;
+     font-size:clamp(2.6rem,6.5vw,5.6rem)}
+  h2{font-family:var(--serif);font-weight:900;line-height:1;letter-spacing:-.02em;
+     font-size:clamp(2rem,4.6vw,3.6rem);margin-bottom:1.2rem}
+  h3{font-family:var(--serif);font-weight:600;font-size:clamp(1.3rem,2.2vw,1.9rem);line-height:1.1}
+  p.lead{font-size:clamp(1.05rem,1.6vw,1.35rem);line-height:1.5;max-width:54ch;color:#33433d}
+  .dark p.lead,.moss p.lead{color:rgba(245,239,228,.86)}
+  .em{font-family:var(--serif);font-style:italic;color:var(--clay)}
+  .dark .em{color:var(--amber)}
+  .hl{background:linear-gradient(transparent 60%,var(--lime) 60%);padding:0 .1em}
+
+  /* ====== NAV / CHROME ====== */
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;
+    align-items:center;padding:1.1rem 1.6rem;pointer-events:none}
+  .brand{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink);background:var(--lime);padding:.45em .9em;border-radius:100px;pointer-events:auto;
+    box-shadow:var(--shadow)}
+  .progress-wrap{position:fixed;bottom:0;left:0;right:0;height:5px;background:rgba(0,0,0,.08);z-index:50}
+  .progress{height:100%;width:0;background:linear-gradient(90deg,var(--moss),var(--lime));
+    transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .nav{position:fixed;bottom:1.2rem;right:1.4rem;z-index:60;display:flex;gap:.5rem;align-items:center}
+  .nav button{font-family:var(--mono);font-size:.8rem;border:none;cursor:pointer;width:46px;height:46px;
+    border-radius:50%;background:var(--ink);color:var(--paper);transition:.2s;display:grid;place-items:center}
+  .nav button:hover{background:var(--moss);transform:translateY(-3px)}
+  .nav .counter{font-family:var(--mono);font-size:.8rem;color:var(--ink);background:#fff;
+    padding:.5em .8em;border-radius:100px;box-shadow:var(--shadow);min-width:64px;text-align:center}
+  .hint{position:fixed;bottom:1.4rem;left:1.4rem;z-index:55;font-family:var(--mono);font-size:.68rem;
+    letter-spacing:.12em;color:rgba(13,27,24,.5);text-transform:uppercase}
+  .dark ~ .hint{color:#888}
+
+  /* ====== TITLE SLIDE ====== */
+  .hero-orbit{position:absolute;right:-8vw;top:50%;transform:translateY(-50%);
+    width:46vw;height:46vw;max-width:620px;max-height:620px;pointer-events:none}
+  .orbit-ring{position:absolute;inset:0;border:1.5px dashed rgba(245,239,228,.22);border-radius:50%;
+    animation:spin 40s linear infinite}
+  .orbit-ring.r2{inset:14%;animation-duration:28s;animation-direction:reverse;border-style:solid;border-color:rgba(200,242,90,.25)}
+  .orbit-ring.r3{inset:30%;animation-duration:18s;border-color:rgba(94,200,224,.3)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .node{position:absolute;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+    background:var(--lime);color:var(--ink);padding:.4em .7em;border-radius:100px;white-space:nowrap;
+    box-shadow:0 8px 20px -8px rgba(0,0,0,.6)}
+  .node.b{background:var(--clay);color:#fff}
+  .node.c{background:var(--sky);color:var(--ink)}
+  .node.d{background:var(--amber);color:var(--ink)}
+  .core{position:absolute;inset:38%;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--moss-bright),var(--moss));
+    display:grid;place-items:center;font-family:var(--serif);font-weight:900;color:var(--lime);
+    box-shadow:0 0 60px -10px var(--moss-bright);font-size:clamp(1rem,2vw,1.6rem);text-align:center;line-height:1}
+  .pulse{animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+  /* ====== GENERIC LAYOUT HELPERS ====== */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:center;height:100%}
+  .stack>*+*{margin-top:1.1rem}
+  .pill{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+    text-transform:uppercase;border:1.5px solid currentColor;padding:.4em .8em;border-radius:100px;margin:.2em .3em .2em 0}
+
+  /* concept cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1.5rem}
+  .card{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:1.4rem;
+    cursor:pointer;transition:.28s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
+  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:var(--moss)}
+  .card .ico{font-size:1.8rem;margin-bottom:.6rem;display:block}
+  .card h3{font-size:1.15rem;margin-bottom:.4rem}
+  .card p{font-size:.92rem;line-height:1.45;color:#4a5852}
+  .card .more{max-height:0;overflow:hidden;transition:max-height .4s ease;font-size:.88rem;
+    color:var(--moss);margin-top:0}
+  .card.open .more{max-height:180px;margin-top:.7rem}
+  .card .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:var(--clay);text-transform:uppercase}
+
+  /* ====== AI MAP (interactive nodes) ====== */
+  .aimap{position:relative;width:100%;height:62vh;margin-top:1rem}
+  .aimap svg{position:absolute;inset:0;width:100%;height:100%}
+  .map-node{position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid var(--ink);
+    border-radius:14px;padding:.7em 1em;cursor:pointer;text-align:center;transition:.25s;z-index:3;
+    min-width:120px;box-shadow:0 6px 18px -10px rgba(0,0,0,.4)}
+  .map-node:hover,.map-node.sel{background:var(--ink);color:var(--paper);transform:translate(-50%,-50%) scale(1.08)}
+  .map-node .t{font-family:var(--serif);font-weight:600;font-size:1.02rem;line-height:1}
+  .map-node .s{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;opacity:.7;text-transform:uppercase}
+  .map-node.acc{border-color:var(--clay)} .map-node.acc.sel,.map-node.acc:hover{background:var(--clay)}
+  .map-node.acc2{border-color:var(--moss)} .map-node.acc2.sel,.map-node.acc2:hover{background:var(--moss)}
+  .map-info{position:absolute;bottom:0;left:0;right:0;background:#fff;border:1.5px solid var(--moss);
+    border-radius:16px;padding:1.1rem 1.4rem;font-size:.95rem;line-height:1.5;box-shadow:var(--shadow);
+    opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none}
+  .map-info.show{opacity:1;transform:none}
+  .map-info b{color:var(--moss)}
+
+  /* ====== PROMPT DEMO ====== */
+  .demo{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1rem;height:62vh}
+  .panel{background:var(--ink);border-radius:18px;padding:1.3rem;color:var(--paper);display:flex;
+    flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
+  .panel .label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--lime);margin-bottom:.8rem;display:flex;align-items:center;gap:.5em}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+  .chip{font-family:var(--sans);font-size:.82rem;background:rgba(245,239,228,.1);border:1px solid rgba(245,239,228,.2);
+    color:var(--paper);padding:.5em .9em;border-radius:100px;cursor:pointer;transition:.2s}
+  .chip:hover{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+  .chip.active{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+  .prompt-box{flex:1;background:rgba(0,0,0,.25);border-radius:12px;padding:1rem;font-family:var(--mono);
+    font-size:.9rem;line-height:1.6;overflow:auto;border:1px solid rgba(245,239,228,.12)}
+  .prompt-box .you{color:var(--sky)}
+  .run-btn{margin-top:1rem;font-family:var(--mono);font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--lime);color:var(--ink);border:none;border-radius:100px;padding:.85em 1.2em;cursor:pointer;
+    font-weight:700;transition:.2s}
+  .run-btn:hover{background:#fff;transform:translateY(-2px)}
+  .code-out{flex:1;background:#0a1512;border-radius:12px;padding:1rem;font-family:var(--mono);font-size:.82rem;
+    line-height:1.55;overflow:auto;border:1px solid rgba(200,242,90,.2);white-space:pre-wrap}
+  .code-out .kw{color:#ff8b6b} .code-out .fn{color:var(--lime)} .code-out .str{color:var(--sky)}
+  .code-out .cm{color:#6b8378;font-style:italic} .code-out .num{color:var(--amber)}
+  .cursor-blink{display:inline-block;width:8px;height:1em;background:var(--lime);vertical-align:-2px;
+    animation:bk .9s steps(1) infinite}
+  @keyframes bk{50%{opacity:0}}
+
+  /* timeline */
+  .timeline{display:flex;gap:0;margin-top:2rem;position:relative;align-items:stretch}
+  .timeline::before{content:"";position:absolute;top:34px;left:0;right:0;height:2px;background:var(--line)}
+  .tl{flex:1;text-align:center;position:relative;padding-top:0;cursor:pointer}
+  .tl .dot{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--moss);
+    margin:26px auto 1rem;position:relative;z-index:2;transition:.25s}
+  .tl:hover .dot{background:var(--lime);transform:scale(1.4)}
+  .tl .yr{font-family:var(--serif);font-weight:900;font-size:1.5rem;color:var(--moss)}
+  .tl .ev{font-size:.82rem;color:#4a5852;line-height:1.4;padding:0 .4rem;max-height:0;overflow:hidden;
+    transition:max-height .35s ease;opacity:0}
+  .tl:hover .ev,.tl.on .ev{max-height:120px;opacity:1;margin-top:.4rem}
+
+  /* big number flow */
+  .flowsteps{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:2rem}
+  .step{background:#fff;border-radius:16px;padding:1.4rem;border:1.5px solid var(--line);position:relative;transition:.3s}
+  .step:hover{border-color:var(--clay);transform:translateY(-5px);box-shadow:var(--shadow)}
+  .step .n{font-family:var(--serif);font-weight:900;font-size:2.4rem;color:var(--lime);
+    -webkit-text-stroke:1.5px var(--moss);line-height:1}
+  .moss .step{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+  .moss .step .n{-webkit-text-stroke:1.5px var(--lime);color:transparent}
+  .step h3{margin:.5rem 0 .3rem;font-size:1.1rem}
+  .step p{font-size:.85rem;line-height:1.45;color:#4a5852}
+  .moss .step p{color:rgba(245,239,228,.8)}
+
+  /* analogy slide */
+  .analogy{display:grid;grid-template-columns:1fr auto 1fr;gap:2vw;align-items:center;margin-top:1.5rem}
+  .ana-box{background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:1.8rem;text-align:center}
+  .ana-box .big{font-size:3rem;margin-bottom:.6rem}
+  .ana-arrow{font-family:var(--serif);font-size:2.5rem;color:var(--clay);font-weight:900}
+
+  /* closing */
+  .qr-ph{width:120px;height:120px;border-radius:16px;background:
+    repeating-linear-gradient(45deg,var(--ink) 0 8px,transparent 8px 16px),var(--lime);}
+
+  ul.clean{list-style:none}
+  ul.clean li{padding-left:1.6em;position:relative;margin-bottom:.7rem;font-size:1.05rem;line-height:1.45}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--clay);font-weight:900}
+  .moss ul.clean li::before,.dark ul.clean li::before{color:var(--lime)}
+
+  @media(max-width:820px){
+    .two,.demo{grid-template-columns:1fr;gap:1.2rem;height:auto}
+    .hero-orbit{display:none}
+    .flowsteps{grid-template-columns:1fr 1fr}
+    .slide{padding:9vh 6vw}
+    .demo{height:auto}
+    .panel{min-height:280px}
+    .token-stage{grid-template-columns:1fr}
+  }
+
+  /* ====== ÍNDICE / MENÚ ====== */
+  .menu-btn{background:#fff;color:var(--ink);border:none;cursor:pointer;font-family:var(--mono)}
+  .menu-btn:hover{background:var(--lime)}
+  .menu-overlay{position:fixed;inset:0;z-index:90;background:rgba(13,27,24,.55);
+    backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:.3s}
+  .menu-overlay.open{opacity:1;visibility:visible}
+  .menu-panel{position:absolute;top:0;right:0;height:100%;width:min(420px,88vw);background:var(--paper);
+    box-shadow:-20px 0 60px -20px rgba(0,0,0,.5);padding:2rem;overflow:auto;
+    transform:translateX(40px);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .menu-overlay.open .menu-panel{transform:none}
+  .menu-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.6rem}
+  .menu-close{background:var(--ink);color:var(--paper);border:none;width:38px;height:38px;border-radius:50%;
+    cursor:pointer;font-size:1rem;transition:.2s}
+  .menu-close:hover{background:var(--clay);transform:rotate(90deg)}
+  .menu-list{list-style:none;counter-reset:m}
+  .menu-list li{counter-increment:m;padding:.85rem 1rem;border-radius:12px;cursor:pointer;
+    display:flex;align-items:center;gap:.9rem;transition:.2s;border:1.5px solid transparent}
+  .menu-list li::before{content:counter(m,decimal-leading-zero);font-family:var(--mono);font-size:.78rem;
+    color:var(--clay);font-weight:700}
+  .menu-list li:hover{background:#fff;border-color:var(--moss);transform:translateX(-4px)}
+  .menu-list li.current{background:var(--moss);color:var(--paper)}
+  .menu-list li.current::before{color:var(--lime)}
+  .menu-list li .mt{font-family:var(--serif);font-weight:600;font-size:1.05rem;line-height:1.1}
+  .menu-list li .md{font-size:.78rem;color:#6a786f;display:block}
+  .menu-list li.current .md{color:rgba(245,239,228,.7)}
+
+  /* ====== TOKEN GENERATION ANIM ====== */
+  .token-stage{display:grid;grid-template-columns:1.15fr .85fr;gap:1.6rem;margin-top:1rem;align-items:start}
+  .token-screen{background:var(--ink);border-radius:18px;padding:1.6rem 1.8rem;color:var(--paper);
+    box-shadow:var(--shadow);min-height:54vh;display:flex;flex-direction:column}
+  .token-screen .label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--lime);margin-bottom:1rem}
+  .token-text{font-family:var(--serif);font-size:clamp(1.3rem,2.6vw,2rem);line-height:1.5;flex:1}
+  .token-text .done{color:var(--paper)}
+  .token-text .ghost{color:rgba(245,239,228,.25)}
+  .tok-current{background:var(--lime);color:var(--ink);padding:.05em .25em;border-radius:6px;
+    animation:tokpop .35s ease}
+  @keyframes tokpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .candidates{margin-top:1.4rem}
+  .cand-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(245,239,228,.55);margin-bottom:.7rem}
+  .cand{display:flex;align-items:center;gap:.8rem;margin-bottom:.55rem;opacity:0;transform:translateX(-10px);
+    animation:candin .3s ease forwards}
+  .cand:nth-child(2){animation-delay:.05s}.cand:nth-child(3){animation-delay:.1s}
+  .cand:nth-child(4){animation-delay:.15s}.cand:nth-child(5){animation-delay:.2s}
+  @keyframes candin{to{opacity:1;transform:none}}
+  .cand .word{font-family:var(--mono);font-size:.92rem;width:90px;flex-shrink:0}
+  .cand.win .word{color:var(--lime);font-weight:700}
+  .cand .bar{flex:1;height:14px;background:rgba(245,239,228,.1);border-radius:8px;overflow:hidden}
+  .cand .fill{height:100%;background:rgba(245,239,228,.3);border-radius:8px;transition:width .4s ease}
+  .cand.win .fill{background:var(--lime)}
+  .cand .pct{font-family:var(--mono);font-size:.78rem;width:48px;text-align:right;opacity:.7}
+  .token-side{display:flex;flex-direction:column;gap:1rem}
+  .token-side .note{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:1.2rem}
+  .token-side .note h3{font-size:1.15rem;margin-bottom:.4rem}
+  .token-side .note p{font-size:.92rem;line-height:1.5;color:#4a5852}
+  .tok-controls{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.4rem}
+  .tok-btn{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;
+    border:none;border-radius:100px;padding:.8em 1.3em;cursor:pointer;font-weight:700;transition:.2s}
+  .tok-btn.primary{background:var(--lime);color:var(--ink)}
+  .tok-btn.primary:hover{background:var(--moss);color:var(--paper);transform:translateY(-2px)}
+  .tok-btn.ghost{background:transparent;border:1.5px solid var(--ink);color:var(--ink)}
+  .tok-btn.ghost:hover{background:var(--ink);color:var(--paper)}
+  .dark .tok-btn.ghost{border-color:var(--paper);color:var(--paper)}
+  .dark .tok-btn.ghost:hover{background:var(--paper);color:var(--ink)}
+  .tok-btn:disabled{opacity:.35;cursor:not-allowed}
+  .tok-btn:disabled:hover{transform:none;background:var(--lime);color:var(--ink)}
+
+  /* ====== PORTADA — título grande + código flotante ====== */
+  .course-title{font-family:var(--serif);font-weight:900;line-height:.95;letter-spacing:-.02em;
+    font-size:clamp(2.8rem,7vw,6rem);text-shadow:0 4px 30px rgba(200,242,90,.25)}
+  .course-sub{font-family:var(--serif);font-style:italic;font-weight:400;
+    font-size:clamp(1.15rem,2.2vw,1.85rem);color:rgba(245,239,228,.85);margin-top:.9rem;line-height:1.2}
+  .float-codes{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+  .float-line{position:absolute;font-family:var(--mono);font-size:.82rem;color:rgba(200,242,90,.32);
+    white-space:nowrap;animation:floatup 16s linear infinite}
+  @keyframes floatup{
+    0%{transform:translateY(110vh);opacity:0}
+    8%{opacity:.55}
+    92%{opacity:.55}
+    100%{transform:translateY(-20vh);opacity:0}
+  }
+  .py-logo{width:clamp(120px,18vw,200px);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))}
+  .core-logo{position:absolute;inset:30%;display:grid;place-items:center;
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.08),rgba(13,27,24,.6));
+    border-radius:50%;backdrop-filter:blur(4px);box-shadow:0 0 60px -10px var(--moss-bright)}
+
+  /* ====== SLIDE 3 — map-info legibilidad ====== */
+  .map-info{color:var(--ink)}
+  .map-info b{color:var(--moss)}
+
+  /* ====== SLIDE 5 — prompt context box ====== */
+  .tok-prompt{background:rgba(94,200,224,.12);border-left:3px solid var(--sky);
+    padding:.7em 1em;border-radius:8px;margin-bottom:1rem;font-family:var(--sans);font-size:.95rem;
+    color:rgba(245,239,228,.92)}
+  .tok-prompt .who{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--sky);margin-bottom:.25rem;display:block}
+
+  /* ====== SLIDE 6 — .hl en oscuro + bloque ejecutable ====== */
+  .dark .hl{background:var(--lime);color:var(--ink);padding:.05em .25em;border-radius:4px;
+    box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  .algo-demo{display:flex;flex-direction:column;gap:.8rem}
+  .algo-code{background:#0a1512;border-radius:14px;padding:1.2rem 1.4rem;font-family:var(--mono);
+    font-size:.88rem;line-height:1.75;border:1px solid rgba(200,242,90,.18);min-height:220px}
+  .algo-code .kw{color:#ff8b6b} .algo-code .fn{color:var(--lime)} .algo-code .str{color:var(--sky)}
+  .algo-code .cm{color:#6b8378;font-style:italic} .algo-code .num{color:var(--amber)}
+  .algo-line{transition:opacity .35s ease, max-height .35s ease, transform .35s ease;
+    max-height:2.5em;overflow:hidden}
+  .algo-line.hidden{opacity:0;max-height:0;transform:translateY(-4px)}
+  .algo-controls{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.2rem}
+  .algo-output{font-family:var(--mono);font-size:.95rem;padding:.85rem 1.1rem;
+    background:rgba(200,242,90,.08);border-radius:10px;border:1px solid rgba(200,242,90,.28);
+    min-height:2.6rem;color:var(--paper);white-space:pre-wrap}
+  .algo-output:empty::before{content:"▸ La salida aparece aquí al ejecutar…";color:rgba(245,239,228,.4);font-style:italic}
+
+  /* ====== SLIDE 7 — botón ejecutar + output ====== */
+  .demo-output{margin-top:1rem;background:#0a1512;border-radius:12px;padding:1rem;
+    font-family:var(--mono);font-size:.82rem;line-height:1.55;color:var(--paper);
+    border:1px solid rgba(200,242,90,.25);min-height:3rem;white-space:pre-wrap;display:none}
+  .demo-output.show{display:block}
+  .demo-output .out-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--lime);margin-bottom:.5rem;display:block}
+  .demo-buttons{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem}
+  .exec-btn{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+    background:var(--clay);color:#fff;border:none;border-radius:100px;padding:.7em 1.1em;
+    cursor:pointer;font-weight:700;transition:.2s}
+  .exec-btn:hover{background:#fff;color:var(--clay);transform:translateY(-2px)}
+  .exec-btn:disabled{opacity:.35;cursor:not-allowed}
+  .exec-btn:disabled:hover{transform:none;background:var(--clay);color:#fff}
+  .demo-graph{width:100%;max-width:280px;margin:.4rem 0}
+
+  /* ====== SLIDE 8 — logos Python + Colab ====== */
+  .logo-row{display:flex;gap:1.6rem;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:1.4rem}
+  .logo-box{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);
+    border-radius:18px;padding:1.1rem 1.4rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;
+    min-width:130px;transition:.3s}
+  .logo-box:hover{transform:translateY(-5px);border-color:var(--lime)}
+  .logo-box svg{width:64px;height:64px}
+  .logo-box p{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;color:var(--paper);text-transform:uppercase}
+  .logo-plus{font-family:var(--serif);font-size:2rem;color:var(--lime);font-weight:900}
+
+  /* ====== SLIDE 10 — Diagrama de Venn + usos ====== */
+  .ds-layout{display:grid;grid-template-columns:minmax(360px,.95fr) minmax(380px,1fr);
+    gap:clamp(1.4rem,4vw,3rem);align-items:center;margin-top:.8rem}
+  .venn-wrap{display:flex;justify-content:center;align-items:center;margin-top:.6rem}
+  .venn{position:relative;width:min(680px,82vw);height:min(445px,52vh);isolation:isolate}
+  .ds-layout .venn-wrap{justify-content:flex-end;margin-top:0}
+  .ds-layout .venn{width:min(500px,42vw);height:min(350px,45vh)}
+  .ds-layout .venn-circle{font-size:clamp(.72rem,1vw,.95rem);padding:.95rem .8rem}
+  .ds-layout .venn-circle.biz{padding:0 .8rem .9rem}
+  .ds-layout .venn-label{font-size:clamp(.55rem,.78vw,.68rem);max-width:110px}
+  .ds-layout .venn-label.center{width:96px;font-size:clamp(.9rem,1.2vw,1.12rem);padding:.55rem}
+  .venn-circle{position:absolute;width:58%;height:74%;border-radius:50%;mix-blend-mode:multiply;
+    display:grid;justify-items:center;align-items:start;text-align:center;font-family:var(--serif);font-weight:700;
+    font-size:clamp(.9rem,1.25vw,1.08rem);line-height:1.08;padding:1.1rem 1rem;color:#fff;letter-spacing:.01em}
+  .venn-circle::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgba(255,255,255,.18);pointer-events:none}
+  .venn-circle.cs{background:rgba(46,139,111,.82);left:6%;top:0}
+  .venn-circle.math{background:rgba(232,98,61,.82);right:6%;top:0}
+  .venn-circle.biz{background:rgba(242,177,52,.9);left:50%;bottom:1%;transform:translateX(-50%);
+    color:var(--ink);align-items:end;padding:0 1rem 1.15rem}
+  .venn-label{position:absolute;font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;
+    text-align:center;color:var(--ink);font-weight:700;line-height:1.15;z-index:5;max-width:135px;
+    text-shadow:0 1px 18px rgba(245,239,228,.65)}
+  .venn-label.ml{top:32%;left:50%;transform:translate(-50%,-50%);color:var(--paper);
+    text-shadow:0 1px 10px rgba(13,27,24,.75)}
+  .venn-label.research{top:64%;left:30%;transform:translate(-50%,-50%)}
+  .venn-label.dz{top:64%;right:30%;transform:translate(50%,-50%)}
+  .venn-label.center{top:53%;left:50%;transform:translate(-50%,-50%);font-family:var(--serif);
+    font-weight:900;font-size:clamp(1.05rem,1.65vw,1.32rem);background:radial-gradient(circle at 35% 30%,#d9ff63,var(--lime));
+    width:116px;aspect-ratio:1;border-radius:50%;box-shadow:0 14px 34px -22px rgba(13,27,24,.65);
+    letter-spacing:0;display:grid;place-items:center;line-height:1.05;padding:.65rem}
+  .ds-uses{align-self:stretch;display:flex;flex-direction:column;justify-content:center;gap:.72rem}
+  .ds-uses h3{color:var(--moss);font-size:clamp(1.2rem,2vw,1.75rem);margin-bottom:.1rem}
+  .ds-use{display:grid;grid-template-columns:34px 1fr;gap:.85rem;align-items:start;
+    padding:.75rem 0;border-bottom:1.5px solid var(--line)}
+  .ds-use:last-child{border-bottom:none}
+  .ds-use .mark{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:var(--ink);color:var(--lime);font-family:var(--serif);font-weight:900;font-size:1rem}
+  .ds-use h4{font-family:var(--serif);font-size:1.04rem;line-height:1.1;margin-bottom:.18rem}
+  .ds-use p{font-size:.92rem;line-height:1.35;color:#4a5852}
+
+  /* ====== ÚLTIMA — flow setup Gmail → Colab → Gemini ====== */
+  .flow-setup{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:1rem;
+    align-items:stretch;margin-top:1.6rem}
+  .flow-setup .flow-step{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);
+    border-radius:18px;padding:1.3rem 1.1rem;transition:.3s;text-align:center}
+  .flow-setup .flow-step:hover{transform:translateY(-5px);border-color:var(--lime);background:rgba(255,255,255,.14)}
+  .flow-setup .flow-step.gem{border-color:var(--lime);background:rgba(200,242,90,.14)}
+  .flow-setup .flow-step .flow-ico{font-size:2.4rem;margin-bottom:.5rem;line-height:1}
+  .flow-setup .flow-step svg.flow-svg{width:48px;height:48px;margin-bottom:.4rem}
+  .flow-setup .flow-step h3{color:var(--lime);font-size:1.05rem;margin-bottom:.4rem;line-height:1.15}
+  .flow-setup .flow-step p{font-size:.85rem;color:rgba(245,239,228,.85);line-height:1.4}
+  .flow-arrow{font-family:var(--serif);font-size:2.2rem;color:var(--lime);align-self:center;font-weight:900;text-align:center}
+  @media(max-width:820px){
+    .flow-setup{grid-template-columns:1fr;gap:.6rem}
+    .flow-arrow{transform:rotate(90deg)}
+    .ds-layout{grid-template-columns:1fr;gap:1rem}
+    .ds-layout .venn-wrap{justify-content:center}
+    .ds-layout .venn{width:min(540px,88vw);height:58vw;max-height:360px}
+    .venn{height:60vw}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">Trabajo Científico · @TCientifico</span>
+  <button class="brand menu-btn" id="menuBtn" aria-label="Índice de secciones">☰ Índice</button>
+</div>
+
+<!-- ÍNDICE / MENÚ DE NAVEGACIÓN -->
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-panel">
+    <div class="menu-head">
+      <span class="kicker" style="margin:0">Saltar a una sección</span>
+      <button class="menu-close" id="menuClose" aria-label="Cerrar">✕</button>
+    </div>
+    <ol class="menu-list" id="menuList"></ol>
+  </div>
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · PORTADA -->
+  <section class="slide dark active">
+    <div class="float-codes" id="floatCodes"></div>
+    <div style="max-width:62%;position:relative;z-index:3">
+      <span class="reveal kicker">Trabajo Científico · Clase 1</span>
+      <h1 class="reveal course-title">
+        Ciencia de <span style="color:var(--lime)">Datos</span><br>
+        con <span style="color:var(--lime)">Python</span> + <span style="color:var(--lime)">IA</span>
+      </h1>
+      <p class="reveal course-sub">De la idea al algoritmo.</p>
+      <p class="reveal lead" style="margin-top:1.4rem">Una introducción para personas que <b style="color:#fff">nunca han programado</b>. Hoy descubrirás cómo la inteligencia artificial se convierte en tu copiloto para escribir Python y hacer ciencia de datos.</p>
+      <div class="reveal" style="margin-top:1.6rem">
+        <span class="pill" style="color:var(--lime)">Sin experiencia previa</span>
+        <span class="pill" style="color:var(--sky)">100% práctico</span>
+        <span class="pill" style="color:var(--amber)">Google Colab</span>
+      </div>
+      <div class="reveal" style="margin-top:2rem;padding-top:1.2rem;border-top:1px solid rgba(245,239,228,.18)">
+        <span style="font-family:var(--mono);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,239,228,.5)">Docente</span>
+        <p style="font-family:var(--serif);font-weight:600;font-size:clamp(1.1rem,1.7vw,1.45rem);color:#fff;margin-top:.4rem;line-height:1.2">
+          Oscar Ivan Vargas Pineda, <span style="color:var(--lime)">PhD</span></p>
+        <p style="font-size:.92rem;color:rgba(245,239,228,.8);line-height:1.4;margin-top:.3rem">
+          Científico de Datos · Earth Innovation Institute<br>Docente Universitario<br>Creador de <b style="color:var(--lime)">Trabajo Científico</b></p>
+      </div>
+    </div>
+    <div class="hero-orbit">
+      <div class="orbit-ring"></div>
+      <div class="orbit-ring r2"></div>
+      <div class="orbit-ring r3"></div>
+      <div class="core-logo pulse">
+        <svg class="py-logo" viewBox="0 0 256 255" xmlns="http://www.w3.org/2000/svg" aria-label="Python logo">
+          <defs>
+            <linearGradient id="pyBlueG" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#387EB8"/><stop offset="100%" stop-color="#366994"/>
+            </linearGradient>
+            <linearGradient id="pyYellowG" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFE052"/><stop offset="100%" stop-color="#FFC331"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#pyBlueG)" d="M126.916.072c-64.832 0-60.784 28.115-60.784 28.115l.072 29.128h61.868v8.745H41.631S.145 61.355.145 126.77c0 65.417 36.21 63.097 36.21 63.097h21.61v-30.356s-1.165-36.21 35.632-36.21h61.362s34.475.557 34.475-33.319V33.97S194.67.072 126.916.072zM92.802 19.66a11.13 11.13 0 0 1 11.13 11.13 11.13 11.13 0 0 1-11.13 11.13 11.13 11.13 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.13z"/>
+          <path fill="url(#pyYellowG)" d="M128.757 254.126c64.832 0 60.784-28.115 60.784-28.115l-.072-29.127H127.6v-8.745h86.441s41.486 4.705 41.486-60.712c0-65.416-36.21-63.096-36.21-63.096h-21.61v30.355s1.165 36.21-35.632 36.21h-61.362s-34.475-.557-34.475 33.32v56.013s-5.235 33.897 62.518 33.897zm34.114-19.586a11.12 11.12 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.131 11.13 11.13 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13z"/>
+        </svg>
+      </div>
+      <div class="node"  style="top:6%;left:42%">Algoritmo</div>
+      <div class="node b" style="top:46%;left:-4%">LLM</div>
+      <div class="node c" style="bottom:8%;left:30%">Datos</div>
+      <div class="node d" style="top:30%;right:-6%">IA</div>
+    </div>
+  </section>
+
+  <!-- 2 · ¿POR QUÉ ESTÁS AQUÍ? -->
+  <section class="slide">
+    <div class="two">
+      <div class="stack">
+        <span class="reveal kicker">El punto de partida</span>
+        <h2 class="reveal">No vienes a memorizar código.<br>Vienes a <span class="em">resolver problemas.</span></h2>
+        <p class="reveal lead">Durante años, programar fue una barrera reservada a quienes estudiaron ingeniería de sistemas. <span class="hl">Eso cambió.</span></p>
+        <p class="reveal lead">Hoy puedes describir lo que quieres en español, y una IA te ayuda a convertirlo en Python funcional. Tu trabajo es <b>pensar el problema</b>; la herramienta te acompaña en la sintaxis.</p>
+      </div>
+      <div class="reveal">
+        <div class="analogy" style="grid-template-columns:1fr;gap:1rem">
+          <div class="ana-box" style="text-align:left;border-color:var(--clay)">
+            <span class="tag" style="font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;color:var(--clay);text-transform:uppercase">Antes</span>
+            <h3 style="margin:.4rem 0">Aprender el idioma completo antes de decir la primera frase.</h3>
+            <p style="color:#4a5852;font-size:.92rem">Meses de sintaxis, errores crípticos y frustración antes de ver un resultado útil.</p>
+          </div>
+          <div class="ana-box" style="text-align:left;border-color:var(--moss);background:var(--moss);color:var(--paper)">
+            <span class="tag" style="font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;color:var(--lime);text-transform:uppercase">Ahora</span>
+            <h3 style="margin:.4rem 0;color:var(--lime)">Conversar con un copiloto que traduce tus ideas a código.</h3>
+            <p style="color:rgba(245,239,228,.85);font-size:.92rem">Describes el objetivo, la IA propone el código, tú entiendes y ajustas.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · MAPA DE CONCEPTOS (interactivo) -->
+  <section class="slide moss">
+    <span class="reveal kicker">El mapa mental de hoy</span>
+    <h2 class="reveal" style="color:var(--paper)">¿Cómo se conecta <span style="color:var(--lime)">todo</span>?</h2>
+    <p class="reveal lead" style="margin-bottom:.4rem">Toca cada concepto para ver qué es y cómo encaja. Empieza arriba: la Inteligencia Artificial es la idea más amplia.</p>
+    <div class="reveal aimap" id="aimap">
+      <svg id="mapLines"><!-- líneas dibujadas por JS --></svg>
+      <div class="map-node sel" data-k="ia"   style="left:50%;top:12%"><div class="t">Inteligencia Artificial</div><div class="s">El paraguas</div></div>
+      <div class="map-node" data-k="ml"        style="left:24%;top:40%"><div class="t">Machine Learning</div><div class="s">Aprende de datos</div></div>
+      <div class="map-node acc" data-k="gen"   style="left:76%;top:40%"><div class="t">IA Generativa · LLM</div><div class="s">Crea texto y código</div></div>
+      <div class="map-node acc2" data-k="ds"   style="left:24%;top:72%"><div class="t">Ciencia de Datos</div><div class="s">El objetivo</div></div>
+      <div class="map-node acc2" data-k="py"   style="left:50%;top:88%"><div class="t">Python</div><div class="s">El lenguaje</div></div>
+      <div class="map-node acc" data-k="algo"  style="left:76%;top:72%"><div class="t">Algoritmo</div><div class="s">La receta</div></div>
+      <div class="map-info" id="mapInfo"></div>
+    </div>
+  </section>
+
+  <!-- 4 · QUÉ ES IA / IA GENERATIVA / LLM -->
+  <section class="slide">
+    <span class="reveal kicker">Definiciones sin tecnicismos</span>
+    <h2 class="reveal">Tres palabras que escucharás <span class="em">todo el curso.</span></h2>
+    <p class="reveal lead">Toca cada tarjeta para profundizar.</p>
+    <div class="cards" id="defCards">
+      <div class="card reveal">
+        <span class="ico">🧠</span>
+        <span class="tag">Concepto base</span>
+        <h3>Inteligencia Artificial</h3>
+        <p>Sistemas que realizan tareas que asociamos con la inteligencia humana: reconocer, predecir, decidir.</p>
+        <div class="more">No es magia ni un cerebro. Es software que encuentra patrones en datos. La IA es el campo grande que contiene todo lo demás.</div>
+      </div>
+      <div class="card reveal">
+        <span class="ico">📈</span>
+        <span class="tag">Subcampo</span>
+        <h3>Machine Learning</h3>
+        <p>La máquina <b>aprende de ejemplos</b> en lugar de seguir reglas escritas a mano una por una.</p>
+        <div class="more">Le muestras miles de casos (datos) y el modelo deduce la regla. Es el corazón de la ciencia de datos predictiva.</div>
+      </div>
+      <div class="card reveal">
+        <span class="ico">✨</span>
+        <span class="tag">Lo que usaremos</span>
+        <h3>IA Generativa</h3>
+        <p>Modelos que <b>crean</b> contenido nuevo: texto, imágenes y, clave para nosotros, <b>código</b>.</p>
+        <div class="more">A diferencia de un buscador, no copia: genera una respuesta original prediciendo qué viene a continuación, palabra por palabra.</div>
+      </div>
+      <div class="card reveal">
+        <span class="ico">💬</span>
+        <span class="tag">El motor</span>
+        <h3>LLM</h3>
+        <p>Large Language Model: un modelo entrenado con enormes cantidades de texto para entender y generar lenguaje.</p>
+        <div class="more">ChatGPT, Claude o Gemini son LLM. Les hablas en español y te responden con explicaciones o Python listo para ejecutar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · LÍNEA DE TIEMPO -->
+  <section class="slide dark">
+    <span class="reveal kicker">Cómo llegamos hasta aquí</span>
+    <h2 class="reveal" style="color:var(--paper)">Una breve historia <span style="color:var(--lime)">(toca cada hito)</span></h2>
+    <div class="reveal timeline" id="timeline">
+      <div class="tl"><div class="dot"></div><div class="yr">1956</div><div class="ev">Nace el término "Inteligencia Artificial" en la conferencia de Dartmouth.</div></div>
+      <div class="tl"><div class="dot"></div><div class="yr">1991</div><div class="ev">Se crea Python, pensado para ser un lenguaje legible y fácil de aprender.</div></div>
+      <div class="tl"><div class="dot"></div><div class="yr">2012</div><div class="ev">El deep learning revoluciona el reconocimiento de imágenes. Despega el ML moderno.</div></div>
+      <div class="tl"><div class="dot"></div><div class="yr">2017</div><div class="ev">Nace la arquitectura "Transformer", la base de los LLM actuales.</div></div>
+      <div class="tl on"><div class="dot" style="border-color:var(--lime);background:var(--lime)"></div><div class="yr" style="color:var(--lime)">Hoy</div><div class="ev">Cualquier persona puede programar conversando con una IA. <b>Aquí empiezas tú.</b></div></div>
+    </div>
+    <p class="reveal lead" style="margin-top:2.5rem">Lo que antes tomaba una carrera universitaria, hoy es accesible en una tarde — si sabes <span style="color:var(--lime)">qué preguntar</span>.</p>
+  </section>
+
+  <!-- 6 · CÓMO GENERA UN LLM (token por token) -->
+  <section class="slide dark">
+    <span class="reveal kicker">Bajo el capó · cómo "piensa" un LLM</span>
+    <h2 class="reveal" style="color:var(--paper)">No escribe frases.<br>Predice <span style="color:var(--lime)">la siguiente palabra.</span></h2>
+    <p class="reveal lead">Un LLM genera texto pieza por pieza (cada pieza se llama <span class="em" style="color:var(--amber)">token</span>). En cada paso calcula qué tan probable es cada palabra y elige. Pulsa para verlo.</p>
+    <div class="reveal token-stage">
+      <div class="token-screen">
+        <div class="tok-prompt">
+          <span class="who">👤 Pregunta del usuario</span>
+          ¿Cuál es la capital de Colombia?
+        </div>
+        <div class="label">🤖 IA · generando respuesta…</div>
+        <div class="token-text" id="tokText"><span class="ghost">Pulsa "Generar siguiente token" para empezar…</span></div>
+        <div class="candidates" id="tokCands"></div>
+      </div>
+      <div class="token-side">
+        <div class="note">
+          <h3>¿Qué estás viendo?</h3>
+          <p>En cada paso el modelo propone varios candidatos con una probabilidad. Normalmente elige el más probable (resaltado en <b style="color:var(--moss)">verde</b>) y lo añade al texto. Luego repite, ahora teniendo en cuenta lo que ya escribió.</p>
+        </div>
+        <div class="note" style="border-color:var(--clay)">
+          <h3 style="color:var(--clay)">La idea clave</h3>
+          <p>No hay un guion escrito de antemano. La coherencia <b>emerge</b> de elegir, una y otra vez, la palabra más probable según el contexto. Así también genera código Python.</p>
+        </div>
+        <div class="tok-controls">
+          <button class="tok-btn primary" id="tokStep">▶ Generar siguiente token</button>
+          <button class="tok-btn ghost" id="tokAuto">⏩ Auto</button>
+          <button class="tok-btn ghost" id="tokReset">↺ Reiniciar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · ALGORITMO -->
+  <section class="slide dark">
+    <div class="two">
+      <div class="stack">
+        <span class="reveal kicker">La palabra clave</span>
+        <h2 class="reveal" style="color:var(--paper)">Un <span style="color:var(--lime)">algoritmo</span> es una receta.</h2>
+        <p class="reveal lead">Una secuencia de pasos ordenados para llegar a un resultado. Lo usas todos los días sin darte cuenta.</p>
+        <ul class="reveal clean" style="margin-top:1rem">
+          <li><b>Receta de cocina:</b> pasos para un plato.</li>
+          <li><b>Indicaciones GPS:</b> pasos para llegar a un destino.</li>
+          <li><b>Algoritmo en Python:</b> pasos para transformar datos en una respuesta.</li>
+        </ul>
+        <p class="reveal lead" style="margin-top:1rem">Programar es, en esencia, <span class="hl">escribir recetas que la computadora ejecuta.</span></p>
+      </div>
+      <div class="reveal">
+        <div class="algo-demo">
+          <div class="algo-code" id="algoCode">
+            <div class="algo-line"><span class="cm"># Algoritmo: ¿el promedio del grupo aprobó?</span></div>
+            <div class="algo-line hidden" data-step="1"><span class="cm"># Paso 1 · los datos</span></div>
+            <div class="algo-line hidden" data-step="1"><span class="kw">notas</span> = [<span class="num">3.5</span>, <span class="num">4.2</span>, <span class="num">2.8</span>, <span class="num">3.9</span>]</div>
+            <div class="algo-line hidden" data-step="2">&nbsp;</div>
+            <div class="algo-line hidden" data-step="2"><span class="cm"># Paso 2 · sumar y dividir</span></div>
+            <div class="algo-line hidden" data-step="2"><span class="kw">promedio</span> = <span class="fn">sum</span>(notas) / <span class="fn">len</span>(notas)</div>
+            <div class="algo-line hidden" data-step="3">&nbsp;</div>
+            <div class="algo-line hidden" data-step="3"><span class="cm"># Paso 3 · decidir</span></div>
+            <div class="algo-line hidden" data-step="3"><span class="kw">if</span> promedio &gt;= <span class="num">3.0</span>:</div>
+            <div class="algo-line hidden" data-step="3">    <span class="fn">print</span>(<span class="str">"Aprobó ✅"</span>)</div>
+            <div class="algo-line hidden" data-step="3"><span class="kw">else</span>:</div>
+            <div class="algo-line hidden" data-step="3">    <span class="fn">print</span>(<span class="str">"No aprobó ❌"</span>)</div>
+          </div>
+          <div class="algo-controls">
+            <button class="tok-btn primary" id="algoStep">▶ Mostrar Paso 1</button>
+            <button class="tok-btn primary" id="algoRun" disabled>▶ Ejecutar</button>
+            <button class="tok-btn ghost" id="algoReset">↺ Reiniciar</button>
+          </div>
+          <div class="algo-output" id="algoOutput"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · DEMO PROMPT → CÓDIGO -->
+  <section class="slide">
+    <span class="reveal kicker">El momento mágico · demo en vivo</span>
+    <h2 class="reveal">Prompt en español <span class="em">→</span> Python real.</h2>
+    <p class="reveal lead">Arma una instrucción tocando las piezas, y mira cómo la IA "genera" el algoritmo. Esto es exactamente lo que harás en Colab.</p>
+    <div class="reveal demo">
+      <div class="panel">
+        <div class="label">◉ Tu prompt para la IA</div>
+        <div class="chips" id="chipRow">
+          <span class="chip" data-i="0">📊 Crear un gráfico</span>
+          <span class="chip" data-i="1">🧮 Calcular promedios</span>
+          <span class="chip" data-i="2">🔮 Predecir un valor</span>
+          <span class="chip" data-i="3">🧹 Limpiar una tabla</span>
+        </div>
+        <div class="prompt-box" id="promptBox"><span class="you">Tú:</span> Selecciona una tarea arriba para construir tu prompt...</div>
+        <button class="run-btn" id="runBtn">▶ Pedir código a la IA</button>
+      </div>
+      <div class="panel" style="background:#0a1512">
+        <div class="label">⌁ Respuesta de la IA · Python</div>
+        <div class="code-out" id="codeOut" style="flex:1"><span style="color:#6b8378">Esperando tu prompt…</span></div>
+        <div class="demo-buttons">
+          <button class="exec-btn" id="execBtn" disabled>▶ Ejecutar código</button>
+        </div>
+        <div class="demo-output" id="demoOutput"><span class="out-label">▸ Salida</span><span id="demoOutputBody"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · GOOGLE COLAB -->
+  <section class="slide moss">
+    <div class="two">
+      <div class="stack">
+        <span class="reveal kicker">Nuestro laboratorio</span>
+        <h2 class="reveal" style="color:var(--paper)">Google <span style="color:var(--lime)">Colaboratory</span></h2>
+        <p class="reveal lead">El lugar donde escribirás y ejecutarás Python <b style="color:#fff">sin instalar nada</b>. Solo necesitas un navegador y tu cuenta de Google.</p>
+        <ul class="reveal clean" style="margin-top:.6rem">
+          <li><b>Gratis</b> y en la nube: tu computadora no hace el trabajo pesado.</li>
+          <li>Organizado en <b>celdas</b>: escribes un paso, lo ejecutas, ves el resultado.</li>
+          <li>Mezcla <b>texto, código y gráficos</b> en un mismo documento.</li>
+          <li>Se guarda solo en tu Google Drive.</li>
+        </ul>
+        <div class="reveal logo-row">
+          <div class="logo-box py">
+            <svg viewBox="0 0 256 255" xmlns="http://www.w3.org/2000/svg" aria-label="Python">
+              <defs>
+                <linearGradient id="pyBlueG8" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#387EB8"/><stop offset="100%" stop-color="#366994"/>
+                </linearGradient>
+                <linearGradient id="pyYellowG8" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FFE052"/><stop offset="100%" stop-color="#FFC331"/>
+                </linearGradient>
+              </defs>
+              <path fill="url(#pyBlueG8)" d="M126.916.072c-64.832 0-60.784 28.115-60.784 28.115l.072 29.128h61.868v8.745H41.631S.145 61.355.145 126.77c0 65.417 36.21 63.097 36.21 63.097h21.61v-30.356s-1.165-36.21 35.632-36.21h61.362s34.475.557 34.475-33.319V33.97S194.67.072 126.916.072zM92.802 19.66a11.13 11.13 0 0 1 11.13 11.13 11.13 11.13 0 0 1-11.13 11.13 11.13 11.13 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.13z"/>
+              <path fill="url(#pyYellowG8)" d="M128.757 254.126c64.832 0 60.784-28.115 60.784-28.115l-.072-29.127H127.6v-8.745h86.441s41.486 4.705 41.486-60.712c0-65.416-36.21-63.096-36.21-63.096h-21.61v30.355s1.165 36.21-35.632 36.21h-61.362s-34.475-.557-34.475 33.32v56.013s-5.235 33.897 62.518 33.897zm34.114-19.586a11.12 11.12 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.131 11.13 11.13 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13z"/>
+            </svg>
+            <p>Python</p>
+          </div>
+          <span class="logo-plus">+</span>
+          <div class="logo-box colab">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-label="Google Colab">
+              <path d="M52 36c-22 0-36 18-36 64s14 64 36 64h32v-22H56c-12 0-20-10-20-42s8-42 20-42h28V36H52z" fill="#F9AB00"/>
+              <path d="M148 164c22 0 36-18 36-64s-14-64-36-64h-32v22h28c12 0 20 10 20 42s-8 42-20 42h-28v22h32z" fill="#F9AB00"/>
+              <circle cx="100" cy="100" r="22" fill="#E37400"/>
+            </svg>
+            <p>Colab</p>
+          </div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)">
+          <div style="background:#f1f3f4;padding:.7rem 1rem;display:flex;gap:.5rem;align-items:center;border-bottom:1px solid #ddd">
+            <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span>
+            <span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span>
+            <span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span>
+            <span style="font-family:var(--mono);font-size:.72rem;color:#666;margin-left:.6rem">notebook.ipynb — Colab</span>
+          </div>
+          <div style="padding:1rem;font-family:var(--mono);font-size:.82rem;color:#222">
+            <div style="background:#f7f7f7;border-left:3px solid var(--moss);padding:.6rem .8rem;border-radius:6px;margin-bottom:.7rem">
+              <span style="color:#999">[1]</span> print("Hola, ciencia de datos")
+            </div>
+            <div style="padding:.2rem .8rem;color:#1f5d4c">▸ Hola, ciencia de datos</div>
+            <div style="background:#f7f7f7;border-left:3px solid var(--clay);padding:.6rem .8rem;border-radius:6px;margin-top:.7rem">
+              <span style="color:#999">[2]</span> <span style="color:#888"># Aquí pegarás el código que te dé la IA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · CIENCIA DE DATOS: DIAGRAMA DE VENN -->
+  <section class="slide">
+    <span class="reveal kicker">El destino</span>
+    <h2 class="reveal">¿Qué es hacer <span class="em">ciencia de datos?</span></h2>
+    <p class="reveal lead">Es la intersección de <b>tres mundos</b>. Ahí, justo en el centro, vive el científico de datos.</p>
+    <div class="reveal ds-layout">
+      <div class="venn-wrap">
+        <div class="venn">
+          <div class="venn-circle cs">Ciencias de la<br>Computación</div>
+          <div class="venn-circle math">Matemáticas y<br>Estadística</div>
+          <div class="venn-circle biz">Conocimiento<br>del Negocio</div>
+          <div class="venn-label ml">Machine<br>Learning</div>
+          <div class="venn-label research">⚠ Zona de<br>Peligro</div>
+          <div class="venn-label dz">Investigación<br>Tradicional</div>
+          <div class="venn-label center">Ciencia de Datos</div>
+        </div>
+      </div>
+      <div class="ds-uses">
+        <h3>¿Para qué se utiliza?</h3>
+        <div class="ds-use">
+          <span class="mark">1</span>
+          <div><h4>Entender qué está pasando</h4><p>Resumir datos, ver patrones y encontrar señales que no son obvias a simple vista.</p></div>
+        </div>
+        <div class="ds-use">
+          <span class="mark">2</span>
+          <div><h4>Predecir lo que puede pasar</h4><p>Estimar ventas, demanda, riesgo, resultados o comportamientos futuros.</p></div>
+        </div>
+        <div class="ds-use">
+          <span class="mark">3</span>
+          <div><h4>Tomar mejores decisiones</h4><p>Comparar opciones con evidencia en lugar de decidir solo por intuición.</p></div>
+        </div>
+        <div class="ds-use">
+          <span class="mark">4</span>
+          <div><h4>Automatizar y detectar alertas</h4><p>Clasificar casos, priorizar tareas y descubrir anomalías antes de que crezcan.</p></div>
+        </div>
+      </div>
+    </div>
+    <p class="reveal lead" style="margin-top:.9rem;text-align:center;width:100%;max-width:none">
+      Python es la herramienta · la IA es el copiloto · <span class="hl">tú eres el científico de datos.</span></p>
+  </section>
+
+  <!-- 11 · CIERRE -->
+  <section class="slide moss">
+    <div style="position:relative;z-index:3">
+      <span class="reveal kicker">¡Empezamos ya!</span>
+      <h1 class="reveal" style="color:var(--paper);font-size:clamp(2.2rem,4.8vw,4rem);line-height:1.05">
+        Ahora vamos a <span style="color:var(--lime)">abrir Colab</span><br>
+        y escribir nuestro <span style="color:var(--lime)">primer algoritmo</span>.
+      </h1>
+      <p class="reveal lead" style="margin-top:1.4rem">Solo necesitas <b style="color:#fff">tres cosas</b>. Probablemente ya las tienes todas.</p>
+      <div class="reveal flow-setup">
+        <div class="flow-step">
+          <svg class="flow-svg" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12v24c0 1.1.9 2 2 2h6V22l10 7 10-7v16h6c1.1 0 2-.9 2-2V12l-18 12L6 12z" fill="#EA4335"/>
+            <path d="M6 12l18 12 18-12c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2z" fill="#FBBC04"/>
+            <path d="M14 22v16H8c-1.1 0-2-.9-2-2V12l8 10z" fill="#34A853"/>
+            <path d="M34 22v16h6c1.1 0 2-.9 2-2V12l-8 10z" fill="#4285F4"/>
+          </svg>
+          <h3>1 · Cuenta Gmail</h3>
+          <p>Tu correo de Google. Es la llave para todo lo demás.</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <svg class="flow-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path d="M52 36c-22 0-36 18-36 64s14 64 36 64h32v-22H56c-12 0-20-10-20-42s8-42 20-42h28V36H52z" fill="#F9AB00"/>
+            <path d="M148 164c22 0 36-18 36-64s-14-64-36-64h-32v22h28c12 0 20 10 20 42s-8 42-20 42h-28v22h32z" fill="#F9AB00"/>
+            <circle cx="100" cy="100" r="22" fill="#E37400"/>
+          </svg>
+          <h3>2 · Google Colab</h3>
+          <p>Abres un notebook gratis en <b style="color:var(--lime)">colab.research.google.com</b>.</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step gem">
+          <svg class="flow-svg" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gemG" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4285F4"/>
+                <stop offset="50%" stop-color="#9B72F5"/>
+                <stop offset="100%" stop-color="#D96570"/>
+              </linearGradient>
+            </defs>
+            <path d="M24 4l4.5 13L42 21l-13 4.5L24 39l-4.5-13.5L6 21l13.5-4z" fill="url(#gemG)"/>
+            <path d="M38 30l1.8 5.2L45 37l-5.2 1.8L38 44l-1.8-5.2L31 37l5.2-1.8z" fill="url(#gemG)" opacity=".75"/>
+          </svg>
+          <h3>3 · Gemini en Colab</h3>
+          <p>La IA <b style="color:var(--lime)">ya viene incluida</b>. Le hablas en español y te entrega Python.</p>
+        </div>
+      </div>
+      <p class="reveal" style="font-family:var(--mono);font-size:.78rem;color:rgba(245,239,228,.7);margin-top:1.6rem;letter-spacing:.1em;text-align:center">
+        TRABAJO CIENTÍFICO · @TCIENTIFICO · DEMOCRATIZANDO LA CIENCIA DE DATOS</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- CHROME -->
+<div class="progress-wrap"><div class="progress" id="prog"></div></div>
+<div class="hint">← → o espacio para navegar</div>
+<div class="nav">
+  <div class="counter"><span id="cur">1</span> / <span id="tot">10</span></div>
+  <button id="prev" aria-label="Anterior">‹</button>
+  <button id="next" aria-label="Siguiente">›</button>
+</div>
+
+<script>
+/* ---------- DECK NAV ---------- */
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;
+const prog=document.getElementById('prog'),cur=document.getElementById('cur');
+document.getElementById('tot').textContent=slides.length;
+function go(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  prog.style.width=((i)/(slides.length-1)*100)+'%';
+  cur.textContent=i+1;
+  if(i===2) setTimeout(drawLines,60);
+  syncMenu();
+}
+document.getElementById('next').onclick=()=>go(i+1);
+document.getElementById('prev').onclick=()=>go(i-1);
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();go(i+1)}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(i-1)}
+  if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+});
+let tx=0;
+addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;
+  if(Math.abs(d)>60){d<0?go(i+1):go(i-1)}},{passive:true});
+go(0);
+
+/* ---------- DEF CARDS ---------- */
+document.querySelectorAll('#defCards .card').forEach(c=>{
+  c.onclick=()=>c.classList.toggle('open');
+});
+
+/* ---------- TIMELINE ---------- */
+document.querySelectorAll('#timeline .tl').forEach(t=>{
+  t.onmouseenter=()=>t.classList.add('on');
+});
+
+/* ---------- AI MAP ---------- */
+const mapData={
+  ia:{t:'Inteligencia Artificial',d:'El campo más amplio: cualquier sistema que imita capacidades humanas como reconocer, predecir o decidir. Todo lo demás vive <b>dentro</b> de este paraguas.'},
+  ml:{t:'Machine Learning',d:'Un subcampo de la IA donde la máquina <b>aprende de datos</b> en vez de seguir reglas fijas. Es el motor de la mayoría de modelos predictivos.'},
+  gen:{t:'IA Generativa y LLM',d:'Tipo de IA que <b>crea</b> contenido nuevo. Los LLM (modelos de lenguaje) entienden tu español y generan explicaciones y código Python. <b>Es tu copiloto en este curso.</b>'},
+  ds:{t:'Ciencia de Datos',d:'La disciplina que usa datos para responder preguntas y tomar decisiones. Es <b>el objetivo</b>: para esto aprendemos las demás piezas.'},
+  py:{t:'Python',d:'El lenguaje de programación que ejecuta tus algoritmos. Es legible, popular en datos y <b>el que la IA escribe mejor</b>.'},
+  algo:{t:'Algoritmo',d:'La receta de pasos que resuelve un problema. La IA te ayuda a escribir el algoritmo, en Python, para hacer ciencia de datos.'}
+};
+const mapInfo=document.getElementById('mapInfo');
+document.querySelectorAll('#aimap .map-node').forEach(n=>{
+  n.onclick=()=>{
+    document.querySelectorAll('#aimap .map-node').forEach(x=>x.classList.remove('sel'));
+    n.classList.add('sel');
+    const k=n.dataset.k;
+    mapInfo.innerHTML='<b>'+mapData[k].t+'</b> · '+mapData[k].d;
+    mapInfo.classList.add('show');
+  };
+});
+mapInfo.innerHTML='<b>Inteligencia Artificial</b> · '+mapData.ia.d;
+mapInfo.classList.add('show');
+
+function drawLines(){
+  const svg=document.getElementById('mapLines');
+  const wrap=document.getElementById('aimap');
+  if(!wrap.offsetWidth)return;
+  const W=wrap.offsetWidth,H=wrap.offsetHeight;
+  const pos=k=>{const e=wrap.querySelector('[data-k="'+k+'"]');
+    const r=e.getBoundingClientRect(),w=wrap.getBoundingClientRect();
+    return {x:r.left-w.left+r.width/2,y:r.top-w.top+r.height/2}};
+  const pairs=[['ia','ml'],['ia','gen'],['ml','ds'],['gen','algo'],['ds','py'],['algo','py'],['ml','gen']];
+  svg.innerHTML=pairs.map(([a,b])=>{const p=pos(a),q=pos(b);
+    return `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="rgba(200,242,90,.35)" stroke-width="2" stroke-dasharray="5 6"/>`;
+  }).join('');
+}
+addEventListener('resize',()=>{if(i===2)drawLines()});
+
+/* ---------- PROMPT DEMO ---------- */
+const tasks=[
+ {prompt:'Tengo las ventas mensuales de mi negocio. Quiero un gráfico de barras claro para presentarlo.',
+  code:`<span class="cm"># IA: gráfico de barras de ventas</span>
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+meses = [<span class="str">"Ene"</span>,<span class="str">"Feb"</span>,<span class="str">"Mar"</span>,<span class="str">"Abr"</span>]
+ventas = [<span class="num">120</span>, <span class="num">150</span>, <span class="num">90</span>, <span class="num">180</span>]
+
+plt.<span class="fn">bar</span>(meses, ventas, color=<span class="str">"#2e8b6f"</span>)
+plt.<span class="fn">title</span>(<span class="str">"Ventas por mes"</span>)
+plt.<span class="fn">show</span>()`},
+ {prompt:'Tengo las calificaciones de mis estudiantes. Quiero saber el promedio y cuántos aprobaron.',
+  code:`<span class="cm"># IA: promedio y aprobados</span>
+notas = [<span class="num">3.5</span>, <span class="num">4.2</span>, <span class="num">2.8</span>, <span class="num">3.9</span>, <span class="num">2.5</span>]
+
+promedio = <span class="fn">sum</span>(notas) / <span class="fn">len</span>(notas)
+aprobados = [n <span class="kw">for</span> n <span class="kw">in</span> notas <span class="kw">if</span> n >= <span class="num">3.0</span>]
+
+<span class="fn">print</span>(<span class="str">f"Promedio: {promedio:.2f}"</span>)
+<span class="fn">print</span>(<span class="str">f"Aprobaron: {len(aprobados)} de {len(notas)}"</span>)`},
+ {prompt:'Con datos históricos de temperatura, quiero predecir el valor del próximo mes.',
+  code:`<span class="cm"># IA: predicción simple (regresión lineal)</span>
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+mes  = np.<span class="fn">array</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>]).<span class="fn">reshape</span>(-<span class="num">1</span>,<span class="num">1</span>)
+temp = np.<span class="fn">array</span>([<span class="num">22</span>,<span class="num">24</span>,<span class="num">23</span>,<span class="num">26</span>,<span class="num">27</span>])
+
+modelo = <span class="fn">LinearRegression</span>().<span class="fn">fit</span>(mes, temp)
+<span class="fn">print</span>(<span class="str">"Predicción mes 6:"</span>, modelo.<span class="fn">predict</span>([[<span class="num">6</span>]]))`},
+ {prompt:'Mi tabla de Excel tiene filas vacías y nombres con espacios de más. Quiero limpiarla.',
+  code:`<span class="cm"># IA: limpieza de datos con pandas</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+df = pd.<span class="fn">read_csv</span>(<span class="str">"datos.csv"</span>)
+
+df = df.<span class="fn">dropna</span>()              <span class="cm"># quita filas vacías</span>
+df[<span class="str">"nombre"</span>] = df[<span class="str">"nombre"</span>].<span class="fn">str</span>.<span class="fn">strip</span>()  <span class="cm"># quita espacios</span>
+df = df.<span class="fn">drop_duplicates</span>()      <span class="cm"># quita repetidos</span>
+
+<span class="fn">print</span>(df.<span class="fn">head</span>())`}
+];
+let sel=null;
+const promptBox=document.getElementById('promptBox');
+const codeOut=document.getElementById('codeOut');
+document.querySelectorAll('#chipRow .chip').forEach(ch=>{
+  ch.onclick=()=>{
+    document.querySelectorAll('#chipRow .chip').forEach(c=>c.classList.remove('active'));
+    ch.classList.add('active');
+    sel=+ch.dataset.i;
+    promptBox.innerHTML='<span class="you">Tú:</span> '+tasks[sel].prompt+'<span class="cursor-blink"></span>';
+    codeOut.innerHTML='<span style="color:#6b8378">Pulsa "Pedir código a la IA"…</span>';
+    const eb=document.getElementById('execBtn');
+    const dout=document.getElementById('demoOutput');
+    if(eb){eb.disabled=true;}
+    if(dout){dout.classList.remove('show');}
+  };
+});
+document.getElementById('runBtn').onclick=()=>{
+  if(sel===null){promptBox.innerHTML='<span class="you" style="color:var(--clay)">Primero elige una tarea ↑</span>';return;}
+  const full=tasks[sel].code;
+  codeOut.innerHTML='';
+  // typewriter por tokens (sobre el HTML ya coloreado, revelado por trozos)
+  const chunks=full.match(/(<[^>]+>|[^<]+)/g)||[full];
+  let i2=0, buff='';
+  codeOut.innerHTML='<span style="color:var(--lime)">⌁ generando…</span>';
+  setTimeout(()=>{
+    codeOut.innerHTML='';
+    const tick=()=>{
+      if(i2>=chunks.length){
+        codeOut.innerHTML=buff;
+        const eb=document.getElementById('execBtn');
+        if(eb) eb.disabled=false;
+        return;
+      }
+      buff+=chunks[i2++];
+      codeOut.innerHTML=buff+'<span class="cursor-blink"></span>';
+      codeOut.scrollTop=codeOut.scrollHeight;
+      setTimeout(tick, chunks[i2-1].startsWith('<')?2:16);
+    };
+    tick();
+  },420);
+};
+
+/* ---------- ÍNDICE / MENÚ ---------- */
+const sectionMeta=[
+  ['Portada','Ciencia de Datos con Python + IA'],
+  ['El punto de partida','Resolver problemas, no memorizar'],
+  ['Mapa de conceptos','Cómo se conecta todo'],
+  ['Definiciones','IA · ML · Generativa · LLM'],
+  ['Línea de tiempo','Cómo llegamos hasta aquí'],
+  ['Bajo el capó','Cómo genera un LLM token por token'],
+  ['Algoritmo','Una receta de pasos, ejecutable'],
+  ['Demo prompt → código','Prompt en español → Python ejecutable'],
+  ['Google Colab','Nuestro laboratorio'],
+  ['Ciencia de datos','La intersección de 3 mundos'],
+  ['¡Empezamos!','Abrir Colab y nuestro primer algoritmo']
+];
+const menuList=document.getElementById('menuList');
+const menuOverlay=document.getElementById('menuOverlay');
+menuList.innerHTML=sectionMeta.map((s,k)=>
+  `<li data-go="${k}"><span><span class="mt">${s[0]}</span><span class="md">${s[1]}</span></span></li>`).join('');
+function syncMenu(){
+  const ml=document.getElementById('menuList');
+  if(!ml||!ml.children.length)return;
+  [...ml.children].forEach((li,k)=>li.classList.toggle('current',k===i));
+}
+function openMenu(o){menuOverlay.classList.toggle('open',o);if(o)syncMenu();}
+document.getElementById('menuBtn').onclick=()=>openMenu(true);
+document.getElementById('menuClose').onclick=()=>openMenu(false);
+menuOverlay.onclick=e=>{if(e.target===menuOverlay)openMenu(false);};
+menuList.querySelectorAll('li').forEach(li=>li.onclick=()=>{go(+li.dataset.go);openMenu(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')openMenu(false);});
+syncMenu();
+// recalcular total real de slides en el contador
+document.getElementById('tot').textContent=slides.length;
+
+/* ---------- TOKEN-BY-TOKEN GENERATION ---------- */
+// secuencia: cada paso = palabra elegida + candidatos alternativos con probabilidad
+const tokenSeq=[
+  {win:'La',     alts:[['La',61],['El',22],['Una',9],['En',5]]},
+  {win:'capital',alts:[['capital',74],['ciudad',15],['sede',6],['región',3]]},
+  {win:'de',     alts:[['de',88],['del',7],['en',3],['para',1]]},
+  {win:'Colombia',alts:[['Colombia',69],['Francia',12],['España',10],['Perú',6]]},
+  {win:'es',     alts:[['es',83],['fue',9],['será',4],['queda',3]]},
+  {win:'Bogotá',  alts:[['Bogotá',79],['Medellín',9],['Cali',6],['Lima',3]]},
+  {win:'.',       alts:[['.',72],[',',14],['y',9],[';',3]]}
+];
+const tokText=document.getElementById('tokText');
+const tokCands=document.getElementById('tokCands');
+let tokI=0, tokAutoTimer=null;
+function renderTok(){
+  // texto ya generado
+  let html='<span class="done">';
+  for(let k=0;k<tokI;k++){
+    const w=tokenSeq[k].win;
+    html+=(k>0 && w!=='.' && w!==',' ?' ':'')+w;
+  }
+  html+='</span>';
+  if(tokI<tokenSeq.length){
+    const cur=tokenSeq[tokI].win;
+    html+=(tokI>0?' ':'')+'<span class="tok-current">'+cur+'</span>';
+    html+=' <span class="ghost">▋</span>';
+  }
+  tokText.innerHTML=html;
+  // candidatos del paso actual (o último)
+  const step=tokenSeq[Math.min(tokI,tokenSeq.length-1)];
+  const max=Math.max(...step.alts.map(a=>a[1]));
+  tokCands.innerHTML='<div class="cand-label">Candidatos · probabilidad estimada</div>'+
+    step.alts.map((a,idx)=>{
+      const win=a[0]===step.win;
+      return `<div class="cand ${win?'win':''}"><span class="word">${a[0]==='.'?'"."':a[0]}</span>`+
+        `<span class="bar"><span class="fill" style="width:${a[1]/max*100}%"></span></span>`+
+        `<span class="pct">${a[1]}%</span></div>`;
+    }).join('');
+}
+function tokStep(){
+  if(tokI>=tokenSeq.length){return;}
+  tokI++;
+  renderTok();
+}
+document.getElementById('tokStep').onclick=tokStep;
+document.getElementById('tokReset').onclick=()=>{
+  clearInterval(tokAutoTimer);tokAutoTimer=null;
+  tokI=0;
+  tokText.innerHTML='<span class="ghost">Pulsa "Generar siguiente token" para empezar…</span>';
+  tokCands.innerHTML='';
+};
+document.getElementById('tokAuto').onclick=function(){
+  if(tokAutoTimer){clearInterval(tokAutoTimer);tokAutoTimer=null;this.textContent='⏩ Auto';return;}
+  if(tokI>=tokenSeq.length)tokI=0;
+  this.textContent='⏸ Pausar';
+  tokAutoTimer=setInterval(()=>{
+    if(tokI>=tokenSeq.length){clearInterval(tokAutoTimer);tokAutoTimer=null;this.textContent='⏩ Auto';return;}
+    tokStep();
+  },900);
+};
+
+/* ---------- ALGO DEMO (slide 6) — revelar pasos + ejecutar ---------- */
+(function(){
+  const stepBtn=document.getElementById('algoStep');
+  const runBtn=document.getElementById('algoRun');
+  const resetBtn=document.getElementById('algoReset');
+  const out=document.getElementById('algoOutput');
+  if(!stepBtn||!runBtn||!resetBtn||!out) return;
+  let step=0;
+  const totalSteps=3;
+  const labels={0:'▶ Mostrar Paso 1',1:'▶ Mostrar Paso 2',2:'▶ Mostrar Paso 3',3:'✓ Pasos listos'};
+  function reveal(){
+    step++;
+    document.querySelectorAll(`.algo-line[data-step="${step}"]`).forEach(l=>l.classList.remove('hidden'));
+    stepBtn.textContent=labels[step];
+    if(step>=totalSteps){
+      stepBtn.disabled=true;
+      runBtn.disabled=false;
+    }
+  }
+  stepBtn.onclick=reveal;
+  runBtn.onclick=()=>{
+    if(step<totalSteps) return;
+    out.innerHTML='<span style="color:var(--lime)">▸ Ejecutando…</span>';
+    runBtn.disabled=true;
+    setTimeout(()=>{
+      // notas=[3.5,4.2,2.8,3.9] -> promedio=3.6 -> Aprobó
+      const notas=[3.5,4.2,2.8,3.9];
+      const promedio=notas.reduce((a,b)=>a+b,0)/notas.length;
+      const msg=promedio>=3.0?'Aprobó ✅':'No aprobó ❌';
+      out.innerHTML='<span style="color:var(--lime)">▸ </span>'+msg+
+        `<br><span style="color:rgba(245,239,228,.5);font-size:.82rem">promedio = ${promedio.toFixed(2)}</span>`;
+      runBtn.disabled=false;
+    },700);
+  };
+  resetBtn.onclick=()=>{
+    step=0;
+    document.querySelectorAll('.algo-line[data-step]').forEach(l=>l.classList.add('hidden'));
+    stepBtn.textContent=labels[0];
+    stepBtn.disabled=false;
+    runBtn.disabled=true;
+    out.innerHTML='';
+  };
+})();
+
+/* ---------- EJECUTAR CÓDIGO IA (slide 7) — salida simulada ---------- */
+(function(){
+  const execBtn=document.getElementById('execBtn');
+  const out=document.getElementById('demoOutput');
+  const body=document.getElementById('demoOutputBody');
+  if(!execBtn||!out||!body) return;
+  const outputs=[
+    // 0 · gráfico de barras
+    `<svg viewBox="0 0 220 130" class="demo-graph" xmlns="http://www.w3.org/2000/svg">
+      <line x1="20" y1="110" x2="210" y2="110" stroke="#6b8378" stroke-width="1"/>
+      <line x1="20" y1="10" x2="20" y2="110" stroke="#6b8378" stroke-width="1"/>
+      <rect x="40" y="50"  width="28" height="60"  fill="#2e8b6f"/>
+      <rect x="80" y="35"  width="28" height="75"  fill="#2e8b6f"/>
+      <rect x="120" y="65" width="28" height="45"  fill="#2e8b6f"/>
+      <rect x="160" y="20" width="28" height="90"  fill="#2e8b6f"/>
+      <text x="54"  y="124" fill="#c8f25a" font-size="9" text-anchor="middle" font-family="monospace">Ene</text>
+      <text x="94"  y="124" fill="#c8f25a" font-size="9" text-anchor="middle" font-family="monospace">Feb</text>
+      <text x="134" y="124" fill="#c8f25a" font-size="9" text-anchor="middle" font-family="monospace">Mar</text>
+      <text x="174" y="124" fill="#c8f25a" font-size="9" text-anchor="middle" font-family="monospace">Abr</text>
+      <text x="110" y="9" fill="#f5efe4" font-size="10" text-anchor="middle" font-family="serif" font-weight="bold">Ventas por mes</text>
+    </svg>`,
+    // 1 · promedio y aprobados
+    `Promedio: 3.38\nAprobaron: 3 de 5`,
+    // 2 · predicción regresión lineal
+    `Predicción mes 6: [27.6]`,
+    // 3 · limpieza pandas
+    `   nombre   edad  ciudad\n0  Carlos    28    Bogotá\n1  María     34    Cali\n2  Lucía     41    Medellín\n3  Andrés    25    Bogotá`
+  ];
+  execBtn.onclick=()=>{
+    if(sel===null||execBtn.disabled) return;
+    body.innerHTML='<span style="color:var(--lime)">⌁ ejecutando…</span>';
+    out.classList.add('show');
+    execBtn.disabled=true;
+    setTimeout(()=>{
+      body.innerHTML=outputs[sel];
+      execBtn.disabled=false;
+    },650);
+  };
+})();
+
+/* ---------- CÓDIGO FLOTANTE en la portada ---------- */
+(function(){
+  const wrap=document.getElementById('floatCodes');
+  if(!wrap) return;
+  const snippets=[
+    'import pandas as pd',
+    'df = pd.read_csv("datos.csv")',
+    'model.fit(X, y)',
+    'plt.plot(x, y)',
+    'np.mean(data)',
+    'from sklearn import LinearRegression',
+    'def predecir(x): return model.predict(x)',
+    'print("Hola, ciencia de datos")',
+    'for fila in df.iterrows():',
+    'df.groupby("ciudad").mean()',
+    'X_train, X_test = split(data)',
+    '# La IA genera este código por ti'
+  ];
+  snippets.forEach((s,k)=>{
+    const el=document.createElement('div');
+    el.className='float-line';
+    el.textContent=s;
+    el.style.left=(5+Math.random()*88)+'%';
+    el.style.animationDelay=(-Math.random()*16)+'s';
+    el.style.animationDuration=(12+Math.random()*8)+'s';
+    el.style.fontSize=(.72+Math.random()*.4).toFixed(2)+'rem';
+    wrap.appendChild(el);
+  });
+})();
+</script>
+</body>
+</html>

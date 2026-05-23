@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundamentos de Python · Trabajo Científico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Skulpt - Motor de Python en el navegador -->
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+
+    <!-- CodeMirror - Editor de Código con Colores -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+
+    <style>
+        :root{
+            --ink:#0d1b18;
+            --paper:#f5efe4;
+            --moss:#1f5d4c;
+            --moss-bright:#2e8b6f;
+            --lime:#c8f25a;
+            --clay:#e8623d;
+            --amber:#f2b134;
+            --sky:#5ec8e0;
+            --slate-deep:#0b1320;
+            --slate-soft:#152033;
+            --line:rgba(245,239,228,.12);
+            --shadow:0 18px 50px -20px rgba(0,0,0,.55);
+            --serif:'Fraunces',Georgia,serif;
+            --sans:'Archivo',sans-serif;
+            --mono:'Space Mono',monospace;
+        }
+        body {
+            font-family: var(--sans);
+            background-color: #0f172a; /* Slate 900 original */
+            color: #f5efe4;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .code-font {
+            font-family: var(--mono);
+        }
+
+        /* Editorial typography */
+        .serif-title{font-family:var(--serif);font-weight:900;letter-spacing:-.02em;line-height:.98}
+        .serif-h2{font-family:var(--serif);font-weight:900;letter-spacing:-.02em;line-height:1}
+        .em{font-family:var(--serif);font-style:italic;color:var(--amber)}
+        .hl{background:linear-gradient(transparent 62%,var(--lime) 62%);color:#0d1b18;padding:0 .15em;border-radius:3px}
+        .kicker{
+            font-family:var(--mono);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;
+            color:var(--lime);display:inline-flex;align-items:center;gap:.6em;
+        }
+        .kicker::before{content:"";width:34px;height:2px;background:currentColor;display:inline-block}
+        .pill{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+            text-transform:uppercase;border:1.5px solid currentColor;padding:.4em .8em;border-radius:100px;margin:.2em .3em .2em 0}
+
+        /* subtle grain on slides */
+        .slide-grain::after{
+            content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            mix-blend-mode:screen;
+        }
+        
+        /* Slide Transitions — estilo cinemático estilo inicio_curso */
+        .slide {
+            display: none;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+            position: relative;
+        }
+        .slide.active {
+            display: flex;
+            animation: slideIn .65s cubic-bezier(.2,.8,.2,1) forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(1.04); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        /* grano sutil sobre las diapositivas activas */
+        .slide.active::before {
+            content:"";position:absolute;inset:0;pointer-events:none;opacity:.04;z-index:0;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            mix-blend-mode:screen;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* IDE Window Styles */
+        .ide-window {
+            background-color: #282a36; /* Dracula bg */
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #44475a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .ide-header {
+            background-color: #21222c;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #191a21;
+        }
+        .ide-dots { display: flex; gap: 6px; }
+        .ide-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .ide-dot.red { background-color: #ff5f56; }
+        .ide-dot.yellow { background-color: #ffbd2e; }
+        .ide-dot.green { background-color: #27c93f; }
+        
+        /* CodeMirror Customizations */
+        .CodeMirror {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            height: auto;
+            min-height: 120px;
+        }
+
+        /* Ajuste de márgenes internos para no romper la cuadrícula */
+        .CodeMirror-lines {
+            padding: 10px 0;
+        }
+
+        /* Restaurar el separador de la columna de números que Tailwind suele borrar */
+        .CodeMirror-gutters {
+            border-right: 1px solid #44475a !important;
+            background-color: #282a36 !important;
+        }
+        
+        /* Console Output */
+        .console-output {
+            background-color: #000;
+            color: #22c55e; /* Tailwind Green 500 */
+            padding: 12px 15px;
+            min-height: 80px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid #44475a;
+            white-space: pre-wrap;
+        }
+
+        .run-btn {
+            background-color: #2563eb;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .run-btn:hover { background-color: #1d4ed8; }
+        
+        .reto-card {
+            background: linear-gradient(145deg, #152033, #0b1320);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            border: 1px solid rgba(200,242,90,.18);
+            position: relative;
+            overflow: hidden;
+        }
+        .reto-card::before{
+            content:"";position:absolute;top:0;left:0;right:0;height:3px;
+            background:linear-gradient(90deg,var(--moss),var(--lime),var(--amber));
+        }
+
+        /* ====== PORTADA ESTILO EDITORIAL ====== */
+        .hero-portada{
+            position:relative;
+            background:#0d1b18;
+            border-radius:0;
+            overflow:hidden;
+            /* Anular el padding del <main> para llenar el viewport */
+            margin:-2rem -1rem -5rem -1rem;
+            padding:2rem 1rem 5rem 1rem;
+            min-height:calc(100vh - 60px);
+        }
+        @media (min-width: 768px){
+            .hero-portada{ margin:-2rem -3rem -5rem -3rem; padding:2rem 3rem 5rem 3rem; }
+        }
+        @media (min-width: 1024px){
+            .hero-portada{ margin:-2rem -6rem -5rem -6rem; padding:2rem 6rem 5rem 6rem; }
+        }
+        .course-title{
+            font-family:var(--serif);font-weight:900;line-height:.95;letter-spacing:-.02em;
+            font-size:clamp(2.8rem,6.8vw,5.8rem);text-shadow:0 4px 30px rgba(200,242,90,.18)
+        }
+        .course-sub{
+            font-family:var(--serif);font-style:italic;font-weight:400;
+            font-size:clamp(1.1rem,2vw,1.7rem);color:rgba(245,239,228,.85);margin-top:.7rem;line-height:1.2
+        }
+        .float-codes{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+        .float-line{
+            position:absolute;font-family:var(--mono);font-size:.82rem;color:rgba(200,242,90,.32);
+            white-space:nowrap;animation:floatup 16s linear infinite
+        }
+        @keyframes floatup{
+            0%{transform:translateY(110vh);opacity:0}
+            8%{opacity:.55}
+            92%{opacity:.55}
+            100%{transform:translateY(-20vh);opacity:0}
+        }
+        .hero-orbit{
+            position:relative;width:min(46vw,520px);height:min(46vw,520px);
+            margin-left:auto;
+        }
+        .orbit-ring{position:absolute;inset:0;border:1.5px dashed rgba(245,239,228,.22);border-radius:50%;
+            animation:spin 40s linear infinite}
+        .orbit-ring.r2{inset:14%;animation-duration:28s;animation-direction:reverse;border-style:solid;border-color:rgba(200,242,90,.25)}
+        .orbit-ring.r3{inset:30%;animation-duration:18s;border-color:rgba(94,200,224,.3)}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .orbit-node{
+            position:absolute;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;
+            background:var(--lime);color:var(--ink);padding:.4em .75em;border-radius:100px;white-space:nowrap;
+            box-shadow:0 8px 20px -8px rgba(0,0,0,.6);font-weight:700
+        }
+        .orbit-node.b{background:var(--clay);color:#fff}
+        .orbit-node.c{background:var(--sky);color:var(--ink)}
+        .orbit-node.d{background:var(--amber);color:var(--ink)}
+        .core-logo{
+            position:absolute;inset:30%;display:grid;place-items:center;
+            background:radial-gradient(circle at 35% 30%,rgba(46,139,111,.55),rgba(13,27,24,.7));
+            border-radius:50%;backdrop-filter:blur(4px);
+            box-shadow:0 0 60px -10px var(--moss-bright)
+        }
+        .py-logo{width:60%;height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))}
+        .pulse{animation:pulse 3s ease-in-out infinite}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+        /* Brand badge */
+        .brand-badge{
+            font-family:var(--mono);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;
+            color:var(--ink);background:var(--lime);padding:.45em .9em;border-radius:100px;
+            box-shadow:0 8px 20px -8px rgba(0,0,0,.5);display:inline-block
+        }
+
+        /* Simulación dataframe */
+        .df-sim{
+            background:linear-gradient(180deg,#0a1512 0%,#050a08 100%);
+            border:1px solid rgba(200,242,90,.18);
+            border-radius:10px;padding:14px 16px;color:#d8e0d6;
+            font-family:var(--mono);font-size:.82rem;line-height:1.65;
+            box-shadow:inset 0 0 30px rgba(46,139,111,.06);
+        }
+        .df-sim .df-head{
+            display:grid;grid-template-columns:34px 1.2fr 1fr 1fr .9fr .9fr;gap:.6rem;
+            color:var(--lime);border-bottom:1px solid rgba(200,242,90,.22);
+            padding-bottom:.4rem;margin-bottom:.4rem;font-weight:700;font-size:.78rem
+        }
+        .df-sim .df-row{
+            display:grid;grid-template-columns:34px 1.2fr 1fr 1fr .9fr .9fr;gap:.6rem;
+            padding:.25rem 0;border-bottom:1px dashed rgba(245,239,228,.07)
+        }
+        .df-sim .df-row:last-child{border-bottom:none}
+        .df-sim .idx{color:var(--amber);font-weight:700}
+        .df-sim .num{color:var(--sky)}
+        .df-sim .pos{color:#86e58b}
+        .df-sim .neg{color:#ef6a6a}
+        .df-sim .meta{
+            margin-top:.6rem;font-size:.7rem;color:rgba(245,239,228,.55);font-family:var(--mono);
+            letter-spacing:.05em;border-top:1px dashed rgba(245,239,228,.1);padding-top:.45rem;display:flex;justify-content:space-between
+        }
+        .df-sim .ok{color:var(--lime)}
+
+        /* Mejora de tarjetas de contenido (slide 2) */
+        .toc-card{transition:.25s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
+        .toc-card:hover{transform:translateY(-4px);border-color:var(--lime) !important}
+        .toc-card::after{
+            content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+            background:linear-gradient(180deg,var(--moss),var(--lime));
+            transform:scaleY(0);transform-origin:top;transition:.3s
+        }
+        .toc-card:hover::after{transform:scaleY(1)}
+
+        /* IDE header accent */
+        .ide-label{
+            font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+            color:var(--lime);margin-bottom:.4rem;display:inline-flex;align-items:center;gap:.45em
+        }
+        .ide-label .dot{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime)}
+
+        /* Reveal animation cuando slide se activa */
+        .slide.active .reveal{animation:rise .65s cubic-bezier(.2,.85,.25,1) backwards}
+        .slide.active .reveal:nth-child(1){animation-delay:.05s}
+        .slide.active .reveal:nth-child(2){animation-delay:.13s}
+        .slide.active .reveal:nth-child(3){animation-delay:.22s}
+        .slide.active .reveal:nth-child(4){animation-delay:.32s}
+        .slide.active .reveal:nth-child(5){animation-delay:.42s}
+        .slide.active .reveal:nth-child(6){animation-delay:.52s}
+        @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+        /* ====== TOPBAR + ÍNDICE / MENÚ ====== */
+        .topbar{
+            position:fixed;top:0;left:0;right:0;z-index:55;display:flex;justify-content:space-between;
+            align-items:center;padding:1rem 1.4rem;pointer-events:none
+        }
+        .topbar .brand-badge{pointer-events:auto}
+        .menu-btn{
+            pointer-events:auto;background:#fff;color:var(--ink);border:none;cursor:pointer;
+            font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+            padding:.45em .9em;border-radius:100px;box-shadow:0 8px 20px -8px rgba(0,0,0,.5);
+            transition:.2s;font-weight:700
+        }
+        .menu-btn:hover{background:var(--lime);transform:translateY(-2px)}
+        .menu-overlay{
+            position:fixed;inset:0;z-index:90;background:rgba(13,27,24,.55);
+            backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:.3s
+        }
+        .menu-overlay.open{opacity:1;visibility:visible}
+        .menu-panel{
+            position:absolute;top:0;right:0;height:100%;width:min(420px,88vw);background:var(--paper);
+            color:var(--ink);box-shadow:-20px 0 60px -20px rgba(0,0,0,.5);padding:2rem;overflow:auto;
+            transform:translateX(40px);transition:transform .35s cubic-bezier(.2,.8,.2,1)
+        }
+        .menu-overlay.open .menu-panel{transform:none}
+        .menu-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem}
+        .menu-head .kicker{color:var(--moss);margin:0}
+        .menu-close{
+            background:var(--ink);color:var(--paper);border:none;width:38px;height:38px;border-radius:50%;
+            cursor:pointer;font-size:1rem;transition:.2s
+        }
+        .menu-close:hover{background:var(--clay);transform:rotate(90deg)}
+        .menu-list{list-style:none;counter-reset:m;padding:0;margin:0}
+        .menu-list li{
+            counter-increment:m;padding:.85rem 1rem;border-radius:12px;cursor:pointer;
+            display:flex;align-items:center;gap:.9rem;transition:.2s;border:1.5px solid transparent;
+            margin-bottom:.2rem
+        }
+        .menu-list li::before{
+            content:counter(m,decimal-leading-zero);font-family:var(--mono);font-size:.78rem;
+            color:var(--clay);font-weight:700;flex-shrink:0
+        }
+        .menu-list li:hover{background:#fff;border-color:var(--moss);transform:translateX(-4px)}
+        .menu-list li.current{background:var(--moss);color:var(--paper)}
+        .menu-list li.current::before{color:var(--lime)}
+        .menu-list li .mt{font-family:var(--serif);font-weight:600;font-size:1.02rem;line-height:1.1;display:block}
+        .menu-list li .md{font-size:.76rem;color:#6a786f;display:block;margin-top:.15rem}
+        .menu-list li.current .md{color:rgba(245,239,228,.75)}
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-800 z-50 fixed top-0" style="height:3px">
+        <div id="progress-bar" class="h-full transition-all duration-300 w-0" style="background:linear-gradient(90deg,var(--moss),var(--lime))"></div>
+    </div>
+
+    <!-- TOPBAR con marca + botón índice -->
+    <div class="topbar">
+        <span class="brand-badge">Trabajo Científico · Módulo 1</span>
+        <button class="menu-btn" id="menuBtn" aria-label="Índice de secciones">☰ Índice</button>
+    </div>
+
+    <!-- ÍNDICE / MENÚ DE NAVEGACIÓN -->
+    <div class="menu-overlay" id="menuOverlay">
+        <div class="menu-panel">
+            <div class="menu-head">
+                <span class="kicker">Saltar a una sección</span>
+                <button class="menu-close" id="menuClose" aria-label="Cerrar">✕</button>
+            </div>
+            <ol class="menu-list" id="menuList"></ol>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main id="presentation-container" class="flex-1 relative overflow-y-auto overflow-x-hidden pt-8 pb-20 px-4 md:px-12 lg:px-24">
+        
+        <!-- SLIDE 1: PORTADA EDITORIAL -->
+        <section class="slide active hero-portada slide-grain h-full" id="slide-1">
+            <div class="float-codes" id="floatCodes"></div>
+
+            <div class="relative z-10 w-full h-full grid grid-cols-1 lg:grid-cols-[1.15fr_.85fr] gap-8 items-center px-4 md:px-10">
+                <div class="max-w-2xl">
+                    <span class="reveal kicker mb-5">Curso · Clase 2</span>
+                    <h1 class="reveal course-title text-white">
+                        Fundamentos de<br>
+                        <span style="color:var(--lime)">Python</span>
+                    </h1>
+                    <p class="reveal course-sub">Tu primera receta de código.</p>
+                    <p class="reveal text-slate-300 text-base md:text-lg leading-relaxed mt-5 max-w-xl">
+                        Aprende a programar desde cero con ejemplos <b style="color:#fff">100% editables</b>. Escribe, modifica y ejecuta Python <span style="color:var(--lime)">directamente en el navegador</span>.
+                    </p>
+                    <div class="reveal mt-5">
+                        <span class="pill" style="color:var(--lime)">Sin experiencia previa</span>
+                        <span class="pill" style="color:var(--sky)">Ejemplos editables</span>
+                        <span class="pill" style="color:var(--amber)">Python en el navegador</span>
+                    </div>
+
+                    <div class="reveal mt-7 pt-5 border-t border-white/15">
+                        <span style="font-family:var(--mono);font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,239,228,.55)">Docente</span>
+                        <p style="font-family:var(--serif);font-weight:600;font-size:1.3rem;color:#fff;line-height:1.2;margin-top:.35rem">
+                            Oscar Ivan Vargas Pineda, <span style="color:var(--lime)">PhD</span>
+                        </p>
+                        <p class="text-sm text-slate-300/85 mt-1">Científico de Datos · Earth Innovation Institute · Creador de <b style="color:var(--lime)">Trabajo Científico</b></p>
+                    </div>
+
+                    <div class="reveal mt-6 flex flex-wrap gap-3 items-center">
+                        <button onclick="nextSlide()" class="px-6 py-3 rounded-full font-bold transition-all hover:scale-105"
+                                style="background:var(--lime);color:var(--ink);box-shadow:0 12px 30px -10px rgba(200,242,90,.5);font-family:var(--sans)">
+                            Comenzar Lección <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                        <span style="font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;color:rgba(245,239,228,.5);text-transform:uppercase">← → o desliza para navegar</span>
+                    </div>
+                </div>
+
+                <div class="reveal hidden lg:block">
+                    <div class="hero-orbit">
+                        <div class="orbit-ring"></div>
+                        <div class="orbit-ring r2"></div>
+                        <div class="orbit-ring r3"></div>
+                        <div class="core-logo pulse">
+                            <svg class="py-logo" viewBox="0 0 256 255" xmlns="http://www.w3.org/2000/svg" aria-label="Python logo">
+                                <defs>
+                                    <linearGradient id="pyBlueG" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#387EB8"/><stop offset="100%" stop-color="#366994"/>
+                                    </linearGradient>
+                                    <linearGradient id="pyYellowG" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#FFE052"/><stop offset="100%" stop-color="#FFC331"/>
+                                    </linearGradient>
+                                </defs>
+                                <path fill="url(#pyBlueG)" d="M126.916.072c-64.832 0-60.784 28.115-60.784 28.115l.072 29.128h61.868v8.745H41.631S.145 61.355.145 126.77c0 65.417 36.21 63.097 36.21 63.097h21.61v-30.356s-1.165-36.21 35.632-36.21h61.362s34.475.557 34.475-33.319V33.97S194.67.072 126.916.072zM92.802 19.66a11.13 11.13 0 0 1 11.13 11.13 11.13 11.13 0 0 1-11.13 11.13 11.13 11.13 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.13z"/>
+                                <path fill="url(#pyYellowG)" d="M128.757 254.126c64.832 0 60.784-28.115 60.784-28.115l-.072-29.127H127.6v-8.745h86.441s41.486 4.705 41.486-60.712c0-65.416-36.21-63.096-36.21-63.096h-21.61v30.355s1.165 36.21-35.632 36.21h-61.362s-34.475-.557-34.475 33.32v56.013s-5.235 33.897 62.518 33.897zm34.114-19.586a11.12 11.12 0 0 1-11.13-11.13 11.13 11.13 0 0 1 11.13-11.131 11.13 11.13 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13z"/>
+                            </svg>
+                        </div>
+                        <div class="orbit-node"   style="top:6%;left:42%">print()</div>
+                        <div class="orbit-node b" style="top:46%;left:-4%">for</div>
+                        <div class="orbit-node c" style="bottom:8%;left:30%">def()</div>
+                        <div class="orbit-node d" style="top:30%;right:-6%">if/else</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: TABLA DE CONTENIDO -->
+        <section class="slide flex-col justify-center h-full py-10" id="slide-2">
+            <div class="text-center mb-10 reveal">
+                <span class="kicker mb-3">El recorrido de hoy</span>
+                <h2 class="serif-h2 text-4xl md:text-5xl mt-4 text-white">Tabla de <span class="em">contenido</span></h2>
+            </div>
+            <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">1</div>
+                    <p class="text-lg text-slate-200">¿Qué es Python y por qué aprenderlo?</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">2</div>
+                    <p class="text-lg text-slate-200">Comentarios: Notas para humanos</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">3</div>
+                    <p class="text-lg text-slate-200">La función print(): El megáfono</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">4</div>
+                    <p class="text-lg text-slate-200">Variables y Tipos de Datos (Con Reto)</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">5</div>
+                    <p class="text-lg text-slate-200">Condicionales lógicos (Con Reto)</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">6</div>
+                    <p class="text-lg text-slate-200">Bucles y Ciclos (Con Reto)</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">7</div>
+                    <p class="text-lg text-slate-200">Funciones de Código (Con Reto)</p>
+                </div>
+                <div class="toc-card bg-slate-800/60 p-5 rounded-xl border border-slate-700 flex items-center pl-7">
+                    <div class="text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4 shrink-0" style="background:var(--lime)">8</div>
+                    <p class="text-lg text-slate-200">Listas y Colecciones (Con Reto)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: QUÉ ES PYTHON -->
+        <section class="slide flex-col h-full py-10" id="slide-3">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 1</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-code mr-2" style="color:var(--lime)"></i>¿Por qué aprender <span class="em">Python</span>?
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full items-center">
+                <div class="space-y-6">
+                    <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-2"><i class="fa-solid fa-brain mr-2"></i>Sintaxis Intuitiva</h3>
+                        <p class="text-slate-300">Python está diseñado para que personas sin experiencia técnica puedan leerlo. No requiere caracteres extraños para funcionar.</p>
+                    </div>
+                    <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                        <h3 class="text-xl font-bold text-green-400 mb-2"><i class="fa-solid fa-chart-line mr-2"></i>El Rey de los Datos</h3>
+                        <p class="text-slate-300">Es el lenguaje estándar mundial para automatizar Excel, Análisis de Datos (Data Science) e Inteligencia Artificial.</p>
+                    </div>
+                    <p class="text-slate-400 italic text-sm mt-4">
+                        <i class="fa-solid fa-arrow-right mr-2"></i> Observa el editor a la derecha. Con solo 3 líneas de código, un Analista de Datos puede leer un Excel completo e imprimir sus resultados.
+                    </p>
+                </div>
+                
+                <!-- Editor de Pandas -->
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <span class="text-slate-400 text-xs font-mono">datos_excel.py</span>
+                        <button class="run-btn" onclick="mostrarErrorPandas()"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-pandas" class="python-editor">import pandas as pd
+
+# 1. Cargamos el archivo de Excel
+df = pd.read_excel('ventas_anuales.xlsx')
+
+# 2. Mostramos los primeros datos en pantalla
+print(df.head())</textarea>
+                    <div id="out-pandas" class="hidden" style="padding:14px;background:#0a1512;border-top:1px solid #44475a;max-height:260px;overflow:auto"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: COMENTARIOS -->
+        <section class="slide flex-col h-full py-10" id="slide-4">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 2</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-comment-dots mr-2" style="color:var(--lime)"></i>Comentarios: <span class="em">notas para humanos</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-xl text-slate-300 mb-4">
+                        Imagina que estás leyendo un libro y haces anotaciones al margen con un lápiz. En programación, eso se llama <strong>Comentario</strong>.
+                    </p>
+                    <ul class="text-lg text-slate-400 space-y-3 list-disc pl-6 mb-6">
+                        <li>Son notas de texto que escribimos para nosotros mismos o para otros programadores.</li>
+                        <li>El computador <strong>ignora por completo</strong> estas líneas. No se ejecutan.</li>
+                        <li>En Python, cualquier línea que comience con el símbolo de numeral (<code>#</code>) se convierte en un comentario.</li>
+                    </ul>
+                </div>
+                
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-comments', 'out-comments')"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-comments" class="python-editor"># Esto es un comentario. El computador no lo leerá.
+# Los usamos para explicar qué hace el código.
+
+print("¡Esto sí se ejecuta en la pantalla!")
+
+# print("Esto está comentado, así que está desactivado y no hará nada")</textarea>
+                    <div id="out-comments" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: PRINT -->
+        <section class="slide flex-col h-full py-10" id="slide-5">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 3</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-bullhorn mr-2" style="color:var(--lime)"></i>La función <code style="font-family:var(--mono);color:var(--amber)">print()</code>: <span class="em">el megáfono</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-xl text-slate-300 mb-4">
+                        Una computadora procesa millones de datos en silencio. Si queremos que nos muestre un resultado o nos dé un mensaje, necesitamos ordenarle que "hable".
+                    </p>
+                    <p class="text-lg text-slate-400 mb-6">
+                        Para eso usamos <code>print()</code>. Es como el megáfono de tu programa. Todo lo que pongas dentro de los paréntesis (y entre comillas si es texto), aparecerá en la consola.
+                    </p>
+                    <div class="p-4 bg-yellow-900/30 border border-yellow-600 rounded-lg text-yellow-300">
+                        <i class="fa-solid fa-hand-pointer mr-2"></i> <strong>¡Inténtalo!</strong> Edita el texto entre comillas en el código de la derecha, pon tu propio nombre y presiona Ejecutar.
+                    </div>
+                </div>
+                
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-print', 'out-print')"><i class="fa-solid fa-play"></i> Ejecutar Código</button>
+                    </div>
+                    <textarea id="code-print" class="python-editor"># Imprimiendo un texto (String)
+print("¡Hola, futuros programadores!")
+
+# Imprimiendo un número
+print(2025)
+
+# Imprimiendo una operación matemática
+print("El resultado de 5 + 5 es:")
+print(5 + 5)</textarea>
+                    <div id="out-print" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: VARIABLES -->
+        <section class="slide flex-col h-full py-10" id="slide-6">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 4</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-box-open mr-2" style="color:var(--lime)"></i>Variables: <span class="em">cajas de almacenamiento</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+                <div class="space-y-4 overflow-y-auto pr-2">
+                    <p class="text-lg text-slate-300">
+                        Imagina que te mudas de casa. Tomas una <strong>caja de cartón</strong>, metes unos libros dentro y le pegas una etiqueta que dice "Libros". 
+                        <br><br>En programación, la etiqueta es el <strong>nombre de la variable</strong> y los libros son el <strong>valor</strong> que guardaste.
+                    </p>
+                    
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-600">
+                        <h4 class="font-bold text-yellow-400 mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Reglas OBLIGATORIAS para nombrar cajas (variables):</h4>
+                        <ul class="text-sm text-slate-300 space-y-2 list-decimal pl-5">
+                            <li><strong>NO pueden tener espacios:</strong> <span class="text-red-400 line-through">mi edad = 20</span> &#8594; <span class="text-green-400">mi_edad = 20</span> (Usa guión bajo).</li>
+                            <li><strong>NO pueden iniciar con números:</strong> <span class="text-red-400 line-through">1_nombre = "Juan"</span> &#8594; <span class="text-green-400">nombre_1 = "Juan"</span>.</li>
+                            <li><strong>Sensibles a mayúsculas:</strong> <code class="text-blue-300">Edad</code> y <code class="text-blue-300">edad</code> son dos cajas totalmente diferentes.</li>
+                            <li><strong>Sin caracteres especiales:</strong> Evita la ñ, tildes y símbolos (@, #, $).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-vars', 'out-vars')"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-vars" class="python-editor"># Creamos variables (etiquetamos cajas)
+nombre_estudiante = "Ana"
+edad = 25
+estatura = 1.68
+
+# Usamos el megáfono para ver qué hay en la caja
+print("El nombre guardado es:")
+print(nombre_estudiante)
+
+print("La edad es:")
+print(edad)</textarea>
+                    <div id="out-vars" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: RETO VARIABLES -->
+        <section class="slide flex-col justify-center items-center h-full text-center py-10" id="slide-7">
+            <div class="reveal mb-8 text-center"><span class="kicker mb-3" style="color:var(--amber)">¡Manos al teclado!</span><h2 class="serif-h2 text-4xl md:text-5xl mt-3" style="color:var(--amber)"><i class="fa-solid fa-laptop-code mr-2"></i>Reto: <span class="em" style="color:var(--lime)">Variables</span></h2></div>
+            <div class="reto-card p-8 md:p-10 rounded-2xl max-w-3xl text-left w-full">
+                <p class="text-xl text-slate-300 mb-6">Utilizando el editor de abajo, escribe un programa que cumpla lo siguiente:</p>
+                <ol class="text-xl text-slate-200 space-y-4 list-decimal list-inside marker:text-yellow-400 marker:font-bold mb-6">
+                    <li>Crea una variable llamada <strong>mi_nombre</strong> y asígnale tu nombre en texto (entre comillas).</li>
+                    <li>Crea una variable llamada <strong>mi_edad</strong> y asígnale tu edad (en números, sin comillas).</li>
+                    <li>Usa la función <code>print()</code> dos veces para imprimir ambas variables.</li>
+                </ol>
+                
+                <div class="ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-reto-vars', 'out-reto-vars')"><i class="fa-solid fa-play"></i> Ejecutar Mi Reto</button>
+                    </div>
+                    <textarea id="code-reto-vars" class="python-editor"># ¡Borra esto y escribe tu código aquí!
+
+
+</textarea>
+                    <div id="out-reto-vars" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: CONDICIONALES -->
+        <section class="slide flex-col h-full py-10" id="slide-8">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 5</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-code-branch mr-2" style="color:var(--lime)"></i>Condicionales: <span class="em">encrucijadas y decisiones</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-lg text-slate-300">
+                        Imagina que vas conduciendo y llegas a una bifurcación en el camino. Un letrero dice: <strong>"SI (if) el semáforo está verde, avanza. SI NO (else), detente."</strong>
+                    </p>
+                    <p class="text-lg text-slate-400">
+                        Los programas no son líneas rectas. Necesitan tomar decisiones basadas en datos. En Python usamos <code>if</code> y <code>else</code> para crear estos caminos condicionales.
+                    </p>
+                    <div class="p-3 bg-slate-800 border-l-4 border-blue-500 rounded text-sm text-slate-300 font-mono">
+                        <p>Operadores útiles:</p>
+                        <p>> (Mayor que) | < (Menor que)</p>
+                        <p>== (Es igual a) | != (Es Diferente a)</p>
+                    </div>
+                </div>
+
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-cond', 'out-cond')"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-cond" class="python-editor"># Cambia este número para ver cómo decide el programa
+edad_usuario = 15
+
+print("Verificando permisos de acceso...")
+
+if edad_usuario >= 18:
+    # Este camino ocurre SI es verdadero
+    print("Eres mayor de edad. Puedes entrar al concierto.")
+else:
+    # Este camino ocurre si es FALSO
+    print("Eres menor de edad. Acceso denegado.")</textarea>
+                    <div id="out-cond" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: RETO CONDICIONALES -->
+        <section class="slide flex-col justify-center items-center h-full text-center py-10" id="slide-9">
+            <div class="reveal mb-8 text-center"><span class="kicker mb-3" style="color:var(--amber)">¡Manos al teclado!</span><h2 class="serif-h2 text-4xl md:text-5xl mt-3" style="color:var(--amber)"><i class="fa-solid fa-code-branch mr-2"></i>Reto: <span class="em" style="color:var(--lime)">Condicionales</span></h2></div>
+            <div class="reto-card p-8 md:p-10 rounded-2xl max-w-3xl text-left w-full">
+                <ol class="text-lg text-slate-200 space-y-3 list-decimal list-inside marker:text-yellow-400 marker:font-bold mb-4">
+                    <li>Crea una variable llamada <strong>calificacion</strong> y asígnale un número de 0 a 100.</li>
+                    <li>Escribe un <code>if / else</code>: Si la calificación es 60 o más, haz un <code>print("Aprobaste la materia")</code>.</li>
+                    <li>De lo contrario, haz un <code>print("Reprobaste la materia")</code>.</li>
+                </ol>
+                
+                <div class="ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-reto-cond', 'out-reto-cond')"><i class="fa-solid fa-play"></i> Ejecutar Mi Reto</button>
+                    </div>
+                    <textarea id="code-reto-cond" class="python-editor"># Escribe tu condicional aquí. 
+# Recuerda la sangría (espacios) dentro del if!
+
+</textarea>
+                    <div id="out-reto-cond" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: BUCLES (LOOPS) -->
+        <section class="slide flex-col h-full py-10" id="slide-10">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 6</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-rotate mr-2" style="color:var(--lime)"></i>Bucles: <span class="em">el trabajador incansable</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-lg text-slate-300">
+                        Imagina que el profesor te castiga y te dice: "Escribe 100 veces en el tablero: No debo llegar tarde". Puedes escribirlo a mano 100 veces, o puedes usar un bucle en Python y dejar que la máquina lo haga en 1 milisegundo.
+                    </p>
+                    <p class="text-lg text-slate-400">
+                        El bucle <code>for</code> se usa para repetir una tarea una cantidad específica de veces usando la orden <code>range()</code> (rango).
+                    </p>
+                </div>
+
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-loop', 'out-loop')"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-loop" class="python-editor">print("Iniciando la secuencia de repetición...")
+
+# range(1, 6) cuenta del 1 al 5.
+for numero in range(1, 6):
+    print("Dando la vuelta número:")
+    print(numero)
+
+print("¡Secuencia terminada!")</textarea>
+                    <div id="out-loop" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 11: RETO BUCLES -->
+        <section class="slide flex-col justify-center items-center h-full text-center py-10" id="slide-11">
+            <div class="reveal mb-8 text-center"><span class="kicker mb-3" style="color:var(--amber)">¡Manos al teclado!</span><h2 class="serif-h2 text-4xl md:text-5xl mt-3" style="color:var(--amber)"><i class="fa-solid fa-rotate mr-2"></i>Reto: <span class="em" style="color:var(--lime)">Bucles</span></h2></div>
+            <div class="reto-card p-8 md:p-10 rounded-2xl max-w-3xl text-left w-full">
+                <ol class="text-lg text-slate-200 space-y-3 list-decimal list-inside marker:text-yellow-400 marker:font-bold mb-4">
+                    <li>Escribe un bucle <code>for</code> que recorra los números usando <code>range(1, 11)</code>.</li>
+                    <li>Dentro del bucle, imprime la palabra "Conteo:" seguida del número.</li>
+                </ol>
+                <div class="p-3 bg-blue-900/30 border-l-4 border-blue-500 rounded text-sm text-slate-300 font-mono mb-4">
+                    Pista: print("Conteo:", variable_del_bucle)
+                </div>
+                
+                <div class="ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-reto-loop', 'out-reto-loop')"><i class="fa-solid fa-play"></i> Ejecutar Mi Reto</button>
+                    </div>
+                    <textarea id="code-reto-loop" class="python-editor"># Escribe tu bucle aquí
+
+
+</textarea>
+                    <div id="out-reto-loop" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: FUNCIONES (dos ventanas: definir + llamar) -->
+        <section class="slide flex-col h-full py-10" id="slide-12">
+            <div class="reveal mb-5 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 7</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-gears mr-2" style="color:var(--lime)"></i>Funciones: <span class="em">recetas de cocina</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-[.85fr_1.15fr] gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-base text-slate-300">
+                        Una función (<code>def</code>) es como una receta para hacer pan. Los <strong>parámetros</strong> son los ingredientes que le entregas (harina, agua), el bloque de código es el horno, y el <code>return</code> es el pan horneado que te devuelve.
+                    </p>
+                    <p class="text-base text-slate-400">
+                        Las usamos para no tener que escribir el mismo código complejo una y otra vez. <strong>Primero</strong> definimos la receta, <strong>luego</strong> la llamamos cuando la necesitamos.
+                    </p>
+                    <div class="p-3 bg-blue-900/30 border-l-4 border-blue-500 rounded text-sm text-slate-300">
+                        <i class="fa-solid fa-lightbulb text-yellow-300 mr-2"></i> Ejecuta primero la ventana <strong>1</strong> (definir) y después la ventana <strong>2</strong> (llamar). La segunda recuerda lo definido en la primera.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Ventana 1: DEFINIR -->
+                    <div>
+                        <div class="ide-label"><span class="dot"></span>1 · Definir la receta</div>
+                        <div class="ide-window h-fit">
+                            <div class="ide-header">
+                                <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                                <span class="text-slate-400 text-xs font-mono">definir.py</span>
+                                <button class="run-btn" onclick="runDefinicion('code-func-def', 'out-func-def')"><i class="fa-solid fa-play"></i> Definir</button>
+                            </div>
+                            <textarea id="code-func-def" class="python-editor"># La máquina está apagada — solo guardamos la receta
+def calcular_area_rectangulo(base, altura):
+    area = base * altura
+    return area</textarea>
+                            <div id="out-func-def" class="console-output code-font text-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- Ventana 2: LLAMAR -->
+                    <div>
+                        <div class="ide-label" style="color:var(--amber)"><span class="dot" style="background:var(--amber);box-shadow:0 0 8px var(--amber)"></span>2 · Llamar la función</div>
+                        <div class="ide-window h-fit">
+                            <div class="ide-header">
+                                <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                                <span class="text-slate-400 text-xs font-mono">llamar.py</span>
+                                <button class="run-btn" onclick="runConDefinicion('code-func-def','code-func-call','out-func-call')"><i class="fa-solid fa-play"></i> Llamar</button>
+                            </div>
+                            <textarea id="code-func-call" class="python-editor"># Usamos la receta con ingredientes reales
+resultado = calcular_area_rectangulo(5, 10)
+
+print("El área del rectángulo es:")
+print(resultado)</textarea>
+                            <div id="out-func-call" class="console-output code-font text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 13: RETO FUNCIONES -->
+        <section class="slide flex-col justify-center items-center h-full text-center py-10" id="slide-13">
+            <div class="reveal mb-8 text-center"><span class="kicker mb-3" style="color:var(--amber)">¡Manos al teclado!</span><h2 class="serif-h2 text-4xl md:text-5xl mt-3" style="color:var(--amber)"><i class="fa-solid fa-gears mr-2"></i>Reto: <span class="em" style="color:var(--lime)">Funciones</span></h2></div>
+            <div class="reto-card p-8 md:p-10 rounded-2xl max-w-3xl text-left w-full">
+                <ol class="text-lg text-slate-200 space-y-3 list-decimal list-inside marker:text-yellow-400 marker:font-bold mb-4">
+                    <li>Define una función <code>def sumar_numeros(num1, num2):</code>.</li>
+                    <li>Dentro de ella, crea una variable que sume ambos números y usa <code>return</code> para devolver el resultado.</li>
+                    <li>Llama a la función pasándole dos números de tu elección, e imprime el resultado.</li>
+                </ol>
+                
+                <div class="ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-reto-func', 'out-reto-func')"><i class="fa-solid fa-play"></i> Ejecutar Mi Reto</button>
+                    </div>
+                    <textarea id="code-reto-func" class="python-editor"># 1. Define tu función aquí
+
+
+# 2. Llámala e imprime el resultado
+</textarea>
+                    <div id="out-reto-func" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 14: LISTAS -->
+        <section class="slide flex-col h-full py-10" id="slide-14">
+            <div class="reveal mb-6 border-b border-slate-700 pb-4">
+                <span class="kicker mb-2">Capítulo 8</span>
+                <h2 class="serif-h2 text-3xl md:text-5xl mt-3 text-white">
+                    <i class="fa-solid fa-list-ul mr-2" style="color:var(--lime)"></i>Listas: <span class="em">mochilas de datos</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 items-center">
+                <div class="space-y-4">
+                    <p class="text-lg text-slate-300">
+                        Ya sabemos que una variable es una caja para UN solo objeto. Pero, ¿y si necesitamos llevar muchos objetos, como en una mochila escolar? Para eso usamos las <strong>Listas</strong> (identificadas por corchetes <code>[]</code>).
+                    </p>
+                    <p class="text-lg text-slate-400">
+                        <strong>Atención:</strong> Las computadoras son raras y empiezan a contar desde cero. El primer elemento de tu mochila está en la posición <code>[0]</code>, no en la 1.
+                    </p>
+                </div>
+                
+                <div class="ide-window h-fit">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-list', 'out-list')"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    </div>
+                    <textarea id="code-list" class="python-editor"># Creamos una lista (mochila)
+mochila = ["Cuaderno", "Lápiz", "Borrador"]
+
+print("Mi mochila tiene:")
+print(mochila)
+
+print("El primer objeto (índice 0) es:")
+print(mochila[0])
+
+# .append() sirve para meter un nuevo objeto al final
+mochila.append("Regla")
+print("Mochila actualizada:")
+print(mochila)</textarea>
+                    <div id="out-list" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 15: RETO LISTAS -->
+        <section class="slide flex-col justify-center items-center h-full text-center py-10" id="slide-15">
+            <div class="reveal mb-8 text-center"><span class="kicker mb-3" style="color:var(--amber)">¡Manos al teclado!</span><h2 class="serif-h2 text-4xl md:text-5xl mt-3" style="color:var(--amber)"><i class="fa-solid fa-list-ul mr-2"></i>Reto: <span class="em" style="color:var(--lime)">Listas</span></h2></div>
+            <div class="reto-card p-8 md:p-10 rounded-2xl max-w-3xl text-left w-full">
+                <ol class="text-lg text-slate-200 space-y-3 list-decimal list-inside marker:text-yellow-400 marker:font-bold mb-4">
+                    <li>Crea una lista llamada <strong>mis_colores</strong> que contenga tres colores en texto (ej. "Rojo", "Azul").</li>
+                    <li>Usa <code>.append()</code> para añadir un cuarto color.</li>
+                    <li>Usa <code>print()</code> para imprimir toda la lista.</li>
+                </ol>
+                
+                <div class="ide-window">
+                    <div class="ide-header">
+                        <div class="ide-dots"><div class="ide-dot red"></div><div class="ide-dot yellow"></div><div class="ide-dot green"></div></div>
+                        <button class="run-btn" onclick="runCode('code-reto-list', 'out-reto-list')"><i class="fa-solid fa-play"></i> Ejecutar Mi Reto</button>
+                    </div>
+                    <textarea id="code-reto-list" class="python-editor"># Escribe aquí tu código de listas
+
+
+</textarea>
+                    <div id="out-reto-list" class="console-output code-font text-sm"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 16: CONCLUSIÓN -->
+        <section class="slide slide-grain flex-col justify-center items-center h-full text-center" id="slide-16"
+                 style="background:radial-gradient(circle at 70% 30%, rgba(31,93,76,.35), transparent 50%), #0d1b18">
+            <i class="fa-solid fa-rocket text-7xl mb-6 reveal" style="color:var(--lime);filter:drop-shadow(0 0 18px rgba(200,242,90,.4))"></i>
+            <span class="reveal kicker mb-4">Final del módulo</span>
+            <h2 class="reveal serif-title text-4xl md:text-6xl mb-6 text-white max-w-3xl">
+                ¡Has dado tu <span style="color:var(--lime)">primer paso</span>!
+            </h2>
+            <p class="reveal text-lg md:text-xl text-slate-300 mb-10 max-w-2xl leading-relaxed">
+                Hoy aprendiste a comunicarte con la computadora escribiendo <span class="em">código de verdad</span>. La programación es como aprender un nuevo idioma: requiere mucha práctica. ¡Sigue explorando y creando!
+            </p>
+            <div class="reveal flex gap-4">
+                <button onclick="goToSlide(0)" class="px-6 py-3 rounded-full font-bold transition-all hover:scale-105"
+                        style="background:var(--lime);color:var(--ink);box-shadow:0 12px 30px -10px rgba(200,242,90,.5)">
+                    <i class="fa-solid fa-rotate-left mr-2"></i> Volver al inicio
+                </button>
+            </div>
+            <p class="reveal mt-10" style="font-family:var(--mono);font-size:.72rem;color:rgba(245,239,228,.55);letter-spacing:.18em;text-transform:uppercase">
+                Trabajo Científico · @TCientifico
+            </p>
+        </section>
+
+    </main>
+
+    <!-- Navigation Controls Bottom -->
+    <footer class="border-t p-3 flex justify-between items-center fixed bottom-0 w-full z-40"
+            style="background:rgba(11,19,32,.92);backdrop-filter:blur(10px);border-color:rgba(245,239,228,.08)">
+        <button id="btn-prev" onclick="prevSlide()" class="px-4 py-2 rounded-full disabled:opacity-40 transition-all hover:scale-105"
+                style="background:rgba(245,239,228,.08);color:#e5e7eb;font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase">
+            <i class="fa-solid fa-chevron-left mr-2"></i>Anterior
+        </button>
+        <div class="hidden sm:block" style="font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;color:rgba(245,239,228,.55);text-transform:uppercase">
+            <span id="current-slide-num" style="color:var(--lime);font-weight:700">01</span>
+            <span class="mx-2 opacity-60">/</span>
+            <span id="total-slide-num">16</span>
+        </div>
+        <button id="btn-next" onclick="nextSlide()" class="px-4 py-2 rounded-full disabled:opacity-40 transition-all hover:scale-105"
+                style="background:var(--lime);color:var(--ink);font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">
+            Siguiente<i class="fa-solid fa-chevron-right ml-2"></i>
+        </button>
+    </footer>
+
+    <!-- JavaScript para Lógica de Presentación e Interactividad -->
+    <script>
+        // --- LOGICA DE NAVEGACION DE DIAPOSITIVAS ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total-slide-num').innerText = String(totalSlides).padStart(2, '0');
+
+        function updateUI() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+
+                    // --- FIX DE CODEMIRROR ---
+                    // Al cargar una diapositiva nueva (que estaba oculta),
+                    // forzamos al editor a volver a calcular su tamaño y layout.
+                    setTimeout(() => {
+                        const textareas = slide.querySelectorAll('.python-editor');
+                        textareas.forEach(ta => {
+                            if (window.cmEditors && window.cmEditors[ta.id]) {
+                                window.cmEditors[ta.id].refresh();
+                            }
+                        });
+                    }, 50); // Pequeño retraso para dejar que la diapositiva sea visible
+
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            document.getElementById('btn-prev').disabled = currentSlide === 0;
+            document.getElementById('btn-next').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('current-slide-num').innerText = String(currentSlide + 1).padStart(2, '0');
+
+            const progress = ((currentSlide) / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            syncMenu();
+
+            // El contenedor principal puede haber scrolleado en una slide anterior;
+            // al cambiar de slide volvemos al inicio.
+            const main = document.getElementById('presentation-container');
+            if (main) main.scrollTop = 0;
+        }
+
+        // --- ÍNDICE / MENÚ DE NAVEGACIÓN ---
+        const sectionMeta = [
+            ['Portada', 'Fundamentos de Python · Clase 2'],
+            ['Tabla de contenido', 'El recorrido de hoy'],
+            ['¿Por qué Python?', 'Sintaxis intuitiva · rey de los datos'],
+            ['Comentarios', 'Notas para humanos'],
+            ['print()', 'El megáfono del programa'],
+            ['Variables', 'Cajas de almacenamiento'],
+            ['Reto · Variables', '¡Manos al teclado!'],
+            ['Condicionales', 'Encrucijadas y decisiones'],
+            ['Reto · Condicionales', '¡Manos al teclado!'],
+            ['Bucles', 'El trabajador incansable'],
+            ['Reto · Bucles', '¡Manos al teclado!'],
+            ['Funciones', 'Recetas de cocina'],
+            ['Reto · Funciones', '¡Manos al teclado!'],
+            ['Listas', 'Mochilas de datos'],
+            ['Reto · Listas', '¡Manos al teclado!'],
+            ['¡Has dado tu primer paso!', 'Final del módulo']
+        ];
+        const menuList = document.getElementById('menuList');
+        const menuOverlay = document.getElementById('menuOverlay');
+        menuList.innerHTML = sectionMeta.map((s, k) =>
+            `<li data-go="${k}"><span><span class="mt">${s[0]}</span><span class="md">${s[1]}</span></span></li>`
+        ).join('');
+        function syncMenu(){
+            const ml = document.getElementById('menuList');
+            if (!ml || !ml.children.length) return;
+            [...ml.children].forEach((li, k) => li.classList.toggle('current', k === currentSlide));
+        }
+        function openMenu(o){
+            menuOverlay.classList.toggle('open', o);
+            if (o) syncMenu();
+        }
+        document.getElementById('menuBtn').onclick = () => openMenu(true);
+        document.getElementById('menuClose').onclick = () => openMenu(false);
+        menuOverlay.onclick = e => { if (e.target === menuOverlay) openMenu(false); };
+        menuList.querySelectorAll('li').forEach(li => li.onclick = () => {
+            goToSlide(+li.dataset.go);
+            openMenu(false);
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') openMenu(false); });
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateUI();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateUI();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateUI();
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            // Do not navigate if user is typing inside CodeMirror
+            if(e.target.closest('.CodeMirror')) return;
+
+            if (e.key === 'ArrowRight') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+
+        // --- INICIALIZAR CODEMIRROR (Editores con colores) ---
+        window.cmEditors = {}; // Guardar las instancias de cada editor
+        
+        document.querySelectorAll('.python-editor').forEach(textarea => {
+            window.cmEditors[textarea.id] = CodeMirror.fromTextArea(textarea, {
+                mode: "python",
+                theme: "dracula",
+                lineNumbers: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                viewportMargin: Infinity
+            });
+        });
+
+        // --- SKULPT: MOTOR DE PYTHON ---
+        // Esta función atrapa el código de CodeMirror, lo procesa con Python y lo envía a la terminal
+        function runCode(editorId, outputId) {
+            // Obtener el código de la instancia de CodeMirror correcta
+            const code = window.cmEditors[editorId].getValue();
+            const outputDiv = document.getElementById(outputId);
+            outputDiv.innerHTML = ''; // Limpiar consola
+            outputDiv.classList.remove('hidden');
+
+            function outf(text) {
+                // Función que recibe los print() de python y los dibuja en HTML
+                outputDiv.innerHTML += text;
+            }
+            function builtinRead(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                    throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+
+            // Configurar Skulpt
+            Sk.pre = outputId;
+            Sk.configure({
+                output: outf, 
+                read: builtinRead,
+                __future__: Sk.python3
+            }); 
+            
+            // Convertir a promesa y ejecutar
+            var myPromise = Sk.misceval.asyncToPromise(function() {
+                return Sk.importMainWithBody("<stdin>", false, code, true);
+            });
+            
+            myPromise.then(function(mod) {
+                // Ejecución exitosa.
+            }, function(err) {
+                // Error de compilación o ejecución en el código escrito por el usuario
+                outputDiv.innerHTML += '<span class="text-red-500 font-bold">\n[Error de Python]: </span><span class="text-red-400">' + err.toString() + '</span>';
+            });
+        }
+
+        // SLIDE 12: Ventana 1 — "compila" la definición y confirma que la receta quedó guardada
+        function runDefinicion(editorId, outputId) {
+            const code = window.cmEditors[editorId].getValue();
+            const outputDiv = document.getElementById(outputId);
+            outputDiv.innerHTML = '';
+            outputDiv.classList.remove('hidden');
+
+            const match = code.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/);
+            const fnName = match ? match[1] : null;
+
+            function outf(text) { outputDiv.innerHTML += text; }
+            function builtinRead(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                    throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+            Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+
+            const confirmacion = fnName
+                ? `\nprint("> Receta '${fnName}' guardada. Lista para llamarse desde la ventana 2.")`
+                : `\nprint("> Codigo procesado.")`;
+
+            Sk.misceval.asyncToPromise(function() {
+                return Sk.importMainWithBody("<stdin>", false, code + confirmacion, true);
+            }).then(function() {}, function(err) {
+                outputDiv.innerHTML += '<span class="text-red-500 font-bold">\n[Error de Python]: </span><span class="text-red-400">' + err.toString() + '</span>';
+            });
+        }
+
+        // SLIDE 12: Ventana 2 — ejecuta la llamada anteponiendo la definición
+        function runConDefinicion(defId, callId, outputId) {
+            const defCode  = window.cmEditors[defId].getValue();
+            const callCode = window.cmEditors[callId].getValue();
+            const codeCombinado = defCode + "\n\n" + callCode;
+
+            const outputDiv = document.getElementById(outputId);
+            outputDiv.innerHTML = '';
+            outputDiv.classList.remove('hidden');
+
+            function outf(text) { outputDiv.innerHTML += text; }
+            function builtinRead(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                    throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+            Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+
+            Sk.misceval.asyncToPromise(function() {
+                return Sk.importMainWithBody("<stdin>", false, codeCombinado, true);
+            }).then(function() {}, function(err) {
+                outputDiv.innerHTML += '<span class="text-red-500 font-bold">\n[Error de Python]: </span><span class="text-red-400">' + err.toString() + '</span>';
+            });
+        }
+
+        // Demo Pandas: muestra DataFrame simulado de 5 variables
+        function mostrarErrorPandas() {
+            const outDiv = document.getElementById('out-pandas');
+            outDiv.classList.remove('hidden');
+            outDiv.innerHTML = `<div class="df-sim">
+  <div class="df-head">
+    <span>#</span><span>mes</span><span>ventas</span><span>costos</span><span>clientes</span><span>margen</span>
+  </div>
+  <div class="df-row"><span class="idx">0</span><span>Enero</span><span class="num">$1,500</span><span class="num">$900</span><span class="num">42</span><span class="pos">+40%</span></div>
+  <div class="df-row"><span class="idx">1</span><span>Febrero</span><span class="num">$2,100</span><span class="num">$1,250</span><span class="num">58</span><span class="pos">+41%</span></div>
+  <div class="df-row"><span class="idx">2</span><span>Marzo</span><span class="num">$1,800</span><span class="num">$1,400</span><span class="num">49</span><span class="neg">+22%</span></div>
+  <div class="df-row"><span class="idx">3</span><span>Abril</span><span class="num">$2,650</span><span class="num">$1,500</span><span class="num">71</span><span class="pos">+43%</span></div>
+  <div class="df-row"><span class="idx">4</span><span>Mayo</span><span class="num">$3,200</span><span class="num">$1,750</span><span class="num">88</span><span class="pos">+45%</span></div>
+  <div class="meta">
+    <span><span class="ok">▸</span> 5 filas × 5 columnas leídas correctamente</span>
+    <span>dtype: object, int64, float64</span>
+  </div>
+</div>`;
+        }
+
+        // Código flotante de la portada
+        (function(){
+            const wrap = document.getElementById('floatCodes');
+            if(!wrap) return;
+            const snippets = [
+                'print("Hola, Python")',
+                'edad = 25',
+                'nombre = "Ana"',
+                'if edad >= 18:',
+                'for i in range(10):',
+                'def saludar(n):',
+                'lista = [1, 2, 3]',
+                'mochila.append("libro")',
+                '# tu primer comentario',
+                'resultado = 5 + 5',
+                'return resultado',
+                'print(f"Total: {x}")'
+            ];
+            snippets.forEach(s => {
+                const el = document.createElement('div');
+                el.className = 'float-line';
+                el.textContent = s;
+                el.style.left = (5 + Math.random()*88) + '%';
+                el.style.animationDelay = (-Math.random()*16) + 's';
+                el.style.animationDuration = (12 + Math.random()*8) + 's';
+                el.style.fontSize = (.72 + Math.random()*.4).toFixed(2) + 'rem';
+                wrap.appendChild(el);
+            });
+        })();
+
+        // Init UI
+        updateUI();
+
+    </script>
+</body>
+</html>
