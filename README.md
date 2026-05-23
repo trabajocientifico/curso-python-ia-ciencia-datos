@@ -6,7 +6,7 @@
 
 <p>
   <a href="https://trabajocientifico.github.io/curso-python-ia-ciencia-datos/" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.shields.io/badge/%F0%9F%9A%80%20ABRIR%20LA%20PRESENTACI%C3%93N%20DEL%20CURSO-0b1614?style=for-the-badge&labelColor=c8f25a&color=0b1614" alt="Abrir presentación del curso" height="48">
+    <img src="https://img.shields.io/badge/%F0%9F%9A%80%20ABRIR%20LA%20PRESENTACI%C3%93N%20DEL%20CURSO-FFFFFF?style=for-the-badge&labelColor=FF3D00&color=FF6E4A" alt="Abrir presentación del curso" height="52">
   </a>
 </p>
 
