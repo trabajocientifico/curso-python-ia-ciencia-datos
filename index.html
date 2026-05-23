@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso · Python + IA para Ciencia de Datos · Trabajo Científico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070d0c;
+    --bg-2:#0b1614;
+    --surface:rgba(255,255,255,.025);
+    --surface-2:rgba(255,255,255,.05);
+    --paper:#e8efe9;
+    --muted:#7d8d87;
+    --moss:#2e8b6f;
+    --lime:#c8f25a;
+    --amber:#f2b134;
+    --clay:#ff6e4a;
+    --line:rgba(232,239,233,.08);
+    --line-2:rgba(232,239,233,.14);
+    --serif:'Fraunces',Georgia,serif;
+    --sans:'Inter',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --glow-lime:0 0 0 1px rgba(200,242,90,.4), 0 0 24px -4px rgba(200,242,90,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    font-family:var(--sans);font-weight:400;
+    background:var(--bg);color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;line-height:1.5;position:relative;
+  }
+
+  /* ====== BACKGROUND ====== */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(200,242,90,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(200,242,90,.04) 1px,transparent 1px);
+    background-size:48px 48px;
+    mask-image:radial-gradient(circle at 50% 25%,#000 0,transparent 80%);
+    -webkit-mask-image:radial-gradient(circle at 50% 25%,#000 0,transparent 80%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(600px 400px at 12% 8%, rgba(46,139,111,.18), transparent 60%),
+      radial-gradient(500px 400px at 92% 35%, rgba(200,242,90,.08), transparent 60%),
+      radial-gradient(700px 500px at 50% 100%, rgba(94,200,224,.06), transparent 65%);
+  }
+  .scanline{
+    position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.06;
+    background:repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(232,239,233,.5) 3px, rgba(232,239,233,.5) 4px);
+    mix-blend-mode:overlay
+  }
+
+  /* ====== HELPERS ====== */
+  .label{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted);font-weight:500
+  }
+  .label.accent{color:var(--lime)}
+  .label.accent::before{content:"//";color:var(--moss);margin-right:.5em;font-weight:700}
+
+  .reveal{animation:rise .8s cubic-bezier(.2,.85,.25,1) backwards}
+  .r1{animation-delay:.04s}.r2{animation-delay:.12s}.r3{animation-delay:.2s}
+  .r4{animation-delay:.28s}.r5{animation-delay:.36s}.r6{animation-delay:.44s}
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+  /* ====== TOP BAR ====== */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:.85rem 1.5rem;
+    background:rgba(7,13,12,.75);backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;
+  }
+  .topbar .term{display:flex;align-items:center;gap:.6em;color:var(--paper)}
+  .topbar .term .dots{display:flex;gap:6px;margin-right:.7em}
+  .topbar .term .dots span{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18)}
+  .topbar .term .dots span:nth-child(1){background:#ff6e4a}
+  .topbar .term .dots span:nth-child(2){background:#f2b134}
+  .topbar .term .dots span:nth-child(3){background:var(--lime);box-shadow:0 0 12px -2px rgba(200,242,90,.7)}
+  .topbar .term .cmd .prompt{color:var(--lime)}
+  .topbar .term .cmd .blink{
+    display:inline-block;width:.5em;height:.95em;background:var(--lime);
+    vertical-align:-.12em;animation:blink 1.05s steps(1) infinite;margin-left:.2em
+  }
+  @keyframes blink{50%{opacity:0}}
+  .topbar .right{display:flex;align-items:center;gap:1rem;color:var(--muted)}
+  .topbar .right .status{display:inline-flex;align-items:center;gap:.5em;color:var(--lime)}
+  .topbar .right .status .dot{
+    width:7px;height:7px;border-radius:50%;background:var(--lime);
+    box-shadow:0 0 0 4px rgba(200,242,90,.18);animation:pulse 2s ease-in-out infinite
+  }
+  @keyframes pulse{50%{opacity:.4}}
+
+  /* ====== PAGE ====== */
+  .page{
+    max-width:1180px;margin:0 auto;padding:6rem 2.4rem 4rem;
+    position:relative;z-index:2
+  }
+  @media(max-width:760px){.page{padding:5.5rem 1.3rem 3rem}}
+
+  /* ====== HERO ====== */
+  .hero{margin-bottom:3.2rem;padding-bottom:2.2rem;border-bottom:1px solid var(--line-2)}
+  .hero .label{margin-bottom:1.2rem}
+  h1.title{
+    font-family:var(--serif);font-weight:700;line-height:.95;letter-spacing:-.025em;
+    font-size:clamp(2.4rem,5.4vw,4.4rem);color:var(--paper);margin-bottom:1rem;
+    max-width:18ch
+  }
+  h1.title .accent{
+    color:var(--lime);text-shadow:0 0 30px rgba(200,242,90,.4)
+  }
+  h1.title .em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--moss)}
+  p.lead{
+    font-size:clamp(1rem,1.4vw,1.12rem);line-height:1.6;color:#b4c1bd;
+    max-width:58ch;margin-bottom:.4rem
+  }
+  p.lead::before{content:"> ";color:var(--lime);font-family:var(--mono)}
+
+  /* ====== SECTION HEAD ====== */
+  .section{margin-bottom:3rem}
+  .section-head{
+    display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:baseline;
+    margin-bottom:1.6rem;padding-bottom:.85rem;border-bottom:1px solid var(--line-2);
+    position:relative
+  }
+  .section-head::after{
+    content:"";position:absolute;left:0;bottom:-1px;width:60px;height:2px;
+    background:var(--lime);box-shadow:0 0 10px -1px var(--lime)
+  }
+  .section-head .ix{
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;color:var(--lime);font-weight:700
+  }
+  .section-head .ix::before{content:"// ";color:var(--moss)}
+  .section-head h2{
+    font-family:var(--serif);font-weight:700;font-size:clamp(1.4rem,2.4vw,1.95rem);
+    line-height:1;letter-spacing:-.02em;color:var(--paper)
+  }
+  .section-head h2 .em{font-style:italic;font-weight:400;color:var(--moss)}
+  .section-head .meta{
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)
+  }
+
+  /* ====== MODULES GRID (PRIORIDAD) ====== */
+  .modules{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1.4rem
+  }
+  @media(max-width:760px){.modules{grid-template-columns:1fr}}
+
+  .module{
+    position:relative;display:flex;flex-direction:column;
+    text-decoration:none;color:inherit;
+    background:var(--surface);
+    border:1px solid var(--line-2);
+    border-radius:10px;
+    padding:2rem 1.8rem 1.6rem;
+    overflow:hidden;
+    transition:.28s cubic-bezier(.2,.8,.2,1);
+    min-height:340px;
+  }
+  .module::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--lime);transform:scaleY(0);transform-origin:top;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 0 14px -2px var(--lime)
+  }
+  .module:hover{
+    border-color:rgba(200,242,90,.45);
+    background:rgba(200,242,90,.04);
+    transform:translateY(-3px);
+    box-shadow:0 30px 60px -25px rgba(0,0,0,.7), 0 0 40px -10px rgba(200,242,90,.18)
+  }
+  .module:hover::before{transform:scaleY(1)}
+
+  .module-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:1.4rem;
+  }
+  .module-id{
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--lime);font-weight:700
+  }
+  .module-id::before{content:"// ";color:var(--moss)}
+  .module-num{
+    font-family:var(--serif);font-weight:700;font-size:2.8rem;line-height:1;
+    color:var(--paper);opacity:.18;letter-spacing:-.04em;
+    transition:.28s
+  }
+  .module:hover .module-num{color:var(--lime);opacity:.35;text-shadow:0 0 20px rgba(200,242,90,.4)}
+
+  .module h3{
+    font-family:var(--serif);font-weight:700;line-height:1.02;letter-spacing:-.02em;
+    font-size:clamp(1.5rem,2.3vw,1.95rem);
+    color:var(--paper);margin-bottom:.85rem
+  }
+  .module h3 .ac{color:var(--lime)}
+
+  .module .desc{
+    font-size:.92rem;line-height:1.55;color:#b4c1bd;
+    margin-bottom:1.3rem;flex:1
+  }
+
+  .module .meta-row{
+    display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:1.3rem
+  }
+  .module .chip{
+    font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);padding:.32em .65em;border-radius:3px;
+    background:transparent;border:1px solid var(--line-2);font-weight:500
+  }
+
+  .module .cta{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:.85em 1.1em;border-radius:6px;
+    background:rgba(200,242,90,.06);
+    border:1px solid rgba(200,242,90,.3);
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--paper);font-weight:700;
+    transition:.25s
+  }
+  .module .cta .arrow{font-family:var(--mono);transition:transform .25s}
+  .module:hover .cta{background:var(--lime);color:var(--bg);border-color:var(--lime);box-shadow:var(--glow-lime)}
+  .module:hover .cta .arrow{transform:translateX(5px)}
+
+  /* ====== PERFIL CARD (más sutil) ====== */
+  .profile-card{
+    display:grid;grid-template-columns:auto 1fr auto;gap:1.6rem;align-items:center;
+    padding:1.4rem 1.6rem;
+    background:linear-gradient(135deg, rgba(46,139,111,.10), rgba(46,139,111,.02));
+    border:1px solid rgba(46,139,111,.35);
+    border-radius:10px;
+    text-decoration:none;color:inherit;
+    transition:.28s;position:relative;overflow:hidden
+  }
+  .profile-card::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 0% 100%, rgba(46,139,111,.18), transparent 60%);
+    pointer-events:none
+  }
+  .profile-card:hover{
+    border-color:var(--moss);
+    background:linear-gradient(135deg, rgba(46,139,111,.18), rgba(46,139,111,.04));
+    transform:translateY(-2px)
+  }
+  .profile-avatar{
+    width:60px;height:60px;border-radius:50%;overflow:hidden;
+    border:1px solid rgba(200,242,90,.4);
+    box-shadow:0 0 0 4px rgba(200,242,90,.08);
+    flex-shrink:0;z-index:1;background:var(--bg-2)
+  }
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .profile-text{z-index:1}
+  .profile-text .label{margin-bottom:.3rem;font-size:.58rem}
+  .profile-text b{
+    font-family:var(--serif);font-weight:600;font-size:1.1rem;
+    color:var(--paper);display:block;line-height:1.15;letter-spacing:-.01em
+  }
+  .profile-text span{
+    font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;color:var(--muted);
+    text-transform:uppercase
+  }
+  .profile-cta{
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--lime);padding:.7em 1em;border-radius:4px;
+    border:1px solid rgba(200,242,90,.4);background:rgba(200,242,90,.05);
+    font-weight:700;z-index:1;flex-shrink:0;transition:.25s
+  }
+  .profile-card:hover .profile-cta{background:var(--lime);color:var(--bg);border-color:var(--lime)}
+
+  @media(max-width:640px){
+    .profile-card{grid-template-columns:auto 1fr;gap:1rem}
+    .profile-cta{grid-column:1/-1;text-align:center;margin-top:.4rem}
+  }
+
+  /* ====== FOOTER ====== */
+  .foot{
+    display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;
+    padding-top:1.8rem;margin-top:3.5rem;border-top:1px solid var(--line-2);
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)
+  }
+  .foot .mid{color:var(--lime);font-weight:700}
+  .foot .mid::before{content:"◢◤ ";color:var(--moss)}
+  .foot .right{text-align:right}
+
+  @media(max-width:760px){
+    .section-head{grid-template-columns:auto 1fr}
+    .section-head .meta{display:none}
+    .topbar .right .meta-rt{display:none}
+    .foot{grid-template-columns:1fr;text-align:left}
+    .foot .right{text-align:left}
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="term">
+    <span class="dots"><span></span><span></span><span></span></span>
+    <span class="cmd"><span class="prompt">~/curso</span> $ load index<span class="blink"></span></span>
+  </span>
+  <span class="right">
+    <span class="meta-rt">v.2026.01</span>
+    <span class="status"><span class="dot"></span>online</span>
+  </span>
+</div>
+
+<div class="page">
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="reveal r1 label accent">Curso · Índice general</div>
+    <h1 class="reveal r2 title">
+      Python + <span class="accent">IA</span><br>
+      para <span class="em">ciencia de datos</span>
+    </h1>
+    <p class="reveal r3 lead">
+      Material interactivo del curso. Selecciona un módulo para comenzar la sesión —
+      navegación con flechas, código ejecutable y retos prácticos en cada deck.
+    </p>
+  </section>
+
+  <!-- ===== MÓDULOS — PRIORIDAD ===== -->
+  <section class="section">
+    <div class="section-head reveal r3">
+      <span class="ix">01 / módulos</span>
+      <h2>Presentaciones <span class="em">interactivas</span></h2>
+      <span class="meta">02 disponibles</span>
+    </div>
+
+    <div class="modules">
+
+      <a class="module reveal r4" href="index/1_inicio_curso.html">
+        <div class="module-head">
+          <span class="module-id">module · 01</span>
+          <span class="module-num">01</span>
+        </div>
+        <h3>Inicio del <span class="ac">curso</span></h3>
+        <p class="desc">Presentación del recorrido, herramientas, comunidad y la visión del curso completo de Python + IA para ciencia de datos.</p>
+        <div class="meta-row">
+          <span class="chip">bienvenida</span>
+          <span class="chip">roadmap</span>
+          <span class="chip">setup</span>
+        </div>
+        <div class="cta"><span>Abrir presentación</span><span class="arrow">→</span></div>
+      </a>
+
+      <a class="module reveal r5" href="index/2_fundamentos-python.html">
+        <div class="module-head">
+          <span class="module-id">module · 02</span>
+          <span class="module-num">02</span>
+        </div>
+        <h3>Fundamentos de <span class="ac">Python</span></h3>
+        <p class="desc">Variables, condicionales, bucles, funciones y listas — con editor de código integrado y retos ejecutables en el navegador.</p>
+        <div class="meta-row">
+          <span class="chip">variables</span>
+          <span class="chip">control</span>
+          <span class="chip">funciones</span>
+          <span class="chip">listas</span>
+        </div>
+        <div class="cta"><span>Abrir presentación</span><span class="arrow">→</span></div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ===== DOCENTE ===== -->
+  <section class="section">
+    <div class="section-head reveal r5">
+      <span class="ix">02 / docente</span>
+      <h2>Sobre el <span class="em">docente</span></h2>
+      <span class="meta">Perfil completo</span>
+    </div>
+
+    <a class="profile-card reveal r6" href="index/perfil.html">
+      <div class="profile-avatar">
+        <img src="index/perfil.png" alt="Oscar Ivan Vargas Pineda" loading="lazy">
+      </div>
+      <div class="profile-text">
+        <div class="label accent">Científico de datos · PhD</div>
+        <b>Oscar Ivan Vargas Pineda</b>
+        <span>Docente investigador · Trabajo Científico</span>
+      </div>
+      <span class="profile-cta">Ver perfil →</span>
+    </a>
+  </section>
+
+  <!-- FOOT -->
+  <div class="foot">
+    <span>© Trabajo Científico</span>
+    <span class="mid">curso · python + ia</span>
+    <span class="right">@TCientifico · 2026</span>
+  </div>
+
+</div>
+
+</body>
+</html>
