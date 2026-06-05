@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiador y Filtro de Bases de Datos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for table */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .drag-active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-2"><i class="fas fa-database mr-2"></i> Limpiador de Bases de Datos</h1>
+            <p class="text-gray-600">Sube tu archivo Excel o CSV, filtra los datos rápidamente y exporta el resultado.</p>
+        </header>
+
+        <!-- Message Box (replaces alerts) -->
+        <div id="messageBox" class="hidden mb-6 p-4 rounded-lg shadow-sm transition-all duration-300 relative">
+            <button onclick="closeMessage()" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="messageContent" class="flex items-center">
+                <!-- Icon and Text injected via JS -->
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div id="uploadSection" class="bg-white p-8 rounded-xl shadow-md border border-gray-100 text-center transition-all duration-300">
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-10 cursor-pointer transition-colors hover:bg-gray-50">
+                <i class="fas fa-cloud-upload-alt text-5xl text-indigo-400 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Arrastra tu archivo aquí o haz clic para seleccionar</h3>
+                <p class="text-sm text-gray-500 mb-4">Formatos soportados: .csv, .xlsx, .xls</p>
+                <input type="file" id="fileInput" class="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                <button onclick="document.getElementById('fileInput').click()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-medium shadow-sm">
+                    Seleccionar Archivo
+                </button>
+            </div>
+        </div>
+
+        <!-- Workspace Section (Hidden by default) -->
+        <div id="workspaceSection" class="hidden space-y-6">
+            
+            <!-- File Info & Actions -->
+            <div class="bg-white p-4 rounded-xl shadow-md flex flex-col md:flex-row justify-between items-center border border-gray-100">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <div class="bg-indigo-100 p-3 rounded-full mr-4 text-indigo-600">
+                        <i class="fas fa-file-excel text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 id="fileNameDisplay" class="font-bold text-gray-800">archivo.xlsx</h2>
+                        <p id="rowCountDisplay" class="text-sm text-gray-500">0 filas cargadas</p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="resetApp()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                        <i class="fas fa-redo mr-2"></i> Cargar Otro Archivo
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Filter Controls -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col h-fit">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-filter mr-2 text-indigo-500"></i> Aplicar Filtros</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Columna</label>
+                            <select id="columnSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
+                                <!-- Options populated via JS -->
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Condición</label>
+                            <select id="operatorSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
+                                <option value="contains">Contiene</option>
+                                <option value="not_contains">No contiene</option>
+                                <option value="eq">Es igual a</option>
+                                <option value="neq">No es igual a</option>
+                                <option value="gt">Es mayor que (Números)</option>
+                                <option value="lt">Es menor que (Números)</option>
+                                <option value="empty">Está vacío</option>
+                                <option value="not_empty">No está vacío</option>
+                            </select>
+                        </div>
+                        
+                        <div id="valueContainer">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                            <input type="text" id="filterValue" placeholder="Escribe el valor aquí..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
+                        </div>
+
+                        <button onclick="addFilter()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium mt-2 shadow-sm">
+                            <i class="fas fa-plus mr-1"></i> Agregar Filtro
+                        </button>
+                    </div>
+
+                    <!-- Active Filters -->
+                    <div class="mt-6">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wider">Filtros Activos</h4>
+                        <div id="activeFiltersList" class="space-y-2">
+                            <p class="text-sm text-gray-400 italic" id="noFiltersText">No hay filtros aplicados.</p>
+                            <!-- Filter tags injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Preview & Export -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md border border-gray-100 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-table mr-2 text-indigo-500"></i> Vista Previa <span id="previewCount" class="text-sm font-normal text-gray-500 ml-2">(Mostrando 0)</span></h3>
+                        
+                        <div class="flex space-x-2">
+                            <button onclick="exportData('csv')" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition font-medium shadow-sm flex items-center">
+                                <i class="fas fa-file-csv mr-2"></i> CSV
+                            </button>
+                            <button onclick="exportData('xlsx')" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition font-medium shadow-sm flex items-center">
+                                <i class="fas fa-file-excel mr-2"></i> Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-0 flex-grow table-container overflow-auto" style="max-height: 500px;">
+                        <table class="min-w-full text-left text-sm whitespace-nowrap" id="dataTable">
+                            <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50 sticky top-0 z-10" id="tableHead">
+                                <!-- Headers injected via JS -->
+                            </thead>
+                            <tbody class="divide-y divide-gray-200" id="tableBody">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="hidden p-10 text-center text-gray-500">
+                            <i class="fas fa-search text-4xl mb-3 text-gray-300"></i>
+                            <p>No hay datos que coincidan con los filtros actuales.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let globalData = [];      // Original unedited data
+        let filteredData = [];    // Data after filters are applied
+        let columns = [];         // Extracted column headers
+        let activeFilters = [];   // Array of active filter objects
+
+        // --- DOM Elements ---
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const uploadSection = document.getElementById('uploadSection');
+        const workspaceSection = document.getElementById('workspaceSection');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const rowCountDisplay = document.getElementById('rowCountDisplay');
+        const columnSelect = document.getElementById('columnSelect');
+        const operatorSelect = document.getElementById('operatorSelect');
+        const filterValue = document.getElementById('filterValue');
+        const valueContainer = document.getElementById('valueContainer');
+        const activeFiltersList = document.getElementById('activeFiltersList');
+        const noFiltersText = document.getElementById('noFiltersText');
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+        const previewCount = document.getElementById('previewCount');
+        const emptyState = document.getElementById('emptyState');
+        const dataTable = document.getElementById('dataTable');
+        const messageBox = document.getElementById('messageBox');
+        const messageContent = document.getElementById('messageContent');
+
+        // --- Event Listeners ---
+        
+        // Drag and drop handling
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-active');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-active');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-active');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                processFile(fileInput.files[0]);
+            }
+        });
+
+        // Click upload handling
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                processFile(e.target.files[0]);
+            }
+        });
+
+        // Hide/Show value input based on operator
+        operatorSelect.addEventListener('change', (e) => {
+            const op = e.target.value;
+            if (op === 'empty' || op === 'not_empty') {
+                valueContainer.style.display = 'none';
+            } else {
+                valueContainer.style.display = 'block';
+            }
+        });
+
+        // --- Core Functions ---
+
+        // Display Custom Messages
+        function showMessage(msg, type = 'info') {
+            messageBox.className = 'mb-6 p-4 rounded-lg shadow-sm transition-all duration-300 relative'; // Reset
+            let icon = '';
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+                icon = '<i class="fas fa-exclamation-circle text-red-500 mr-2 text-xl"></i>';
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-50', 'text-green-800', 'border', 'border-green-200');
+                icon = '<i class="fas fa-check-circle text-green-500 mr-2 text-xl"></i>';
+            } else {
+                messageBox.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+                icon = '<i class="fas fa-info-circle text-blue-500 mr-2 text-xl"></i>';
+            }
+            messageContent.innerHTML = `${icon} <span>${msg}</span>`;
+            messageBox.classList.remove('hidden');
+        }
+
+        function closeMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // Process File using SheetJS
+        function processFile(file) {
+            closeMessage();
+            const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            
+            // Basic extension check as fallback
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!validTypes.includes(file.type) && !['csv', 'xlsx', 'xls'].includes(ext)) {
+                showMessage("Formato de archivo no válido. Por favor sube un Excel o CSV.", 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to JSON (defval:"" ensures empty cells are included as empty strings)
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    if (json.length === 0) {
+                        showMessage("El archivo parece estar vacío o no tiene el formato correcto.", 'error');
+                        return;
+                    }
+
+                    // Initialize data
+                    globalData = json;
+                    filteredData = [...globalData];
+                    
+                    // Extract columns from the first object, and make sure we get all possible keys
+                    // in case the first row has missing columns.
+                    let colSet = new Set();
+                    json.forEach(row => {
+                        Object.keys(row).forEach(key => colSet.add(key));
+                    });
+                    columns = Array.from(colSet);
+
+                    // Setup UI
+                    setupWorkspace(file.name);
+                    showMessage("Archivo cargado exitosamente.", 'success');
+
+                } catch (error) {
+                    console.error(error);
+                    showMessage("Error al leer el archivo. Asegúrate de que no esté dañado.", 'error');
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function setupWorkspace(fileName) {
+            fileNameDisplay.textContent = fileName;
+            uploadSection.classList.add('hidden');
+            workspaceSection.classList.remove('hidden');
+            
+            // Populate Column Dropdown
+            columnSelect.innerHTML = '';
+            columns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                columnSelect.appendChild(option);
+            });
+
+            // Reset filters
+            activeFilters = [];
+            renderActiveFilters();
+            
+            // Update Data
+            applyFilters();
+        }
+
+        function resetApp() {
+            globalData = [];
+            filteredData = [];
+            columns = [];
+            activeFilters = [];
+            fileInput.value = '';
+            uploadSection.classList.remove('hidden');
+            workspaceSection.classList.add('hidden');
+            closeMessage();
+        }
+
+        // --- Filtering Logic ---
+
+        function addFilter() {
+            const col = columnSelect.value;
+            const op = operatorSelect.value;
+            const val = filterValue.value;
+
+            if (op !== 'empty' && op !== 'not_empty' && val.trim() === '') {
+                showMessage("Por favor ingresa un valor para filtrar.", 'error');
+                return;
+            }
+
+            activeFilters.push({ id: Date.now(), col, op, val });
+            filterValue.value = ''; // clear input
+            
+            renderActiveFilters();
+            applyFilters();
+            closeMessage();
+        }
+
+        function removeFilter(id) {
+            activeFilters = activeFilters.filter(f => f.id !== id);
+            renderActiveFilters();
+            applyFilters();
+        }
+
+        function renderActiveFilters() {
+            activeFiltersList.innerHTML = '';
+            
+            if (activeFilters.length === 0) {
+                activeFiltersList.appendChild(noFiltersText);
+                return;
+            }
+
+            const operatorText = {
+                'contains': 'contiene',
+                'not_contains': 'no contiene',
+                'eq': 'es igual a',
+                'neq': 'no es igual a',
+                'gt': '>',
+                'lt': '<',
+                'empty': 'está vacío',
+                'not_empty': 'tiene datos'
+            };
+
+            activeFilters.forEach(filter => {
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-md text-sm text-indigo-800';
+                
+                let valDisplay = (filter.op === 'empty' || filter.op === 'not_empty') ? '' : `"${filter.val}"`;
+                
+                el.innerHTML = `
+                    <span class="truncate pr-2">
+                        <strong>${filter.col}</strong> ${operatorText[filter.op]} ${valDisplay}
+                    </span>
+                    <button onclick="removeFilter(${filter.id})" class="text-indigo-400 hover:text-red-500 focus:outline-none shrink-0">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                activeFiltersList.appendChild(el);
+            });
+        }
+
+        function applyFilters() {
+            filteredData = globalData.filter(row => {
+                // Row must pass ALL active filters (AND logic)
+                return activeFilters.every(filter => {
+                    let cellValue = row[filter.col];
+                    if (cellValue === undefined || cellValue === null) cellValue = "";
+                    
+                    const cellStr = String(cellValue).toLowerCase().trim();
+                    const filterStr = String(filter.val).toLowerCase().trim();
+
+                    switch (filter.op) {
+                        case 'contains':
+                            return cellStr.includes(filterStr);
+                        case 'not_contains':
+                            return !cellStr.includes(filterStr);
+                        case 'eq':
+                            return cellStr === filterStr;
+                        case 'neq':
+                            return cellStr !== filterStr;
+                        case 'gt':
+                        case 'lt':
+                            // Numeric comparison
+                            let numCell = parseFloat(cellValue);
+                            let numFilter = parseFloat(filter.val);
+                            if (!isNaN(numCell) && !isNaN(numFilter)) {
+                                if (filter.op === 'gt') return numCell > numFilter;
+                                if (filter.op === 'lt') return numCell < numFilter;
+                            }
+                            // Fallback if not numbers: string comparison
+                            return filter.op === 'gt' ? cellStr > filterStr : cellStr < filterStr;
+                        case 'empty':
+                            return cellStr === '';
+                        case 'not_empty':
+                            return cellStr !== '';
+                        default:
+                            return true;
+                    }
+                });
+            });
+
+            renderTable();
+        }
+
+        // --- Table Rendering ---
+
+        function renderTable() {
+            rowCountDisplay.textContent = `${filteredData.length} filas de ${globalData.length} totales`;
+            
+            if (filteredData.length === 0) {
+                dataTable.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                previewCount.textContent = `(Mostrando 0)`;
+                return;
+            }
+
+            dataTable.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            // Render Headers
+            tableHead.innerHTML = '';
+            const trHead = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.className = 'px-6 py-3 font-semibold text-gray-700 whitespace-nowrap';
+                th.textContent = col;
+                trHead.appendChild(th);
+            });
+            tableHead.appendChild(trHead);
+
+            // Render Body (Limit to 100 to prevent browser lag on huge files)
+            const MAX_ROWS = 100;
+            const rowsToRender = filteredData.slice(0, MAX_ROWS);
+            
+            previewCount.textContent = `(Mostrando ${rowsToRender.length}${filteredData.length > MAX_ROWS ? ' de ' + filteredData.length : ''})`;
+
+            tableBody.innerHTML = '';
+            rowsToRender.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.className = 'px-6 py-3 text-gray-600 truncate max-w-xs';
+                    // Show empty values as slight visual indicator or empty
+                    td.textContent = (row[col] !== undefined && row[col] !== "") ? row[col] : '-';
+                    td.title = row[col]; // Tooltip for truncated text
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // --- Export Logic ---
+
+        function exportData(format) {
+            if (filteredData.length === 0) {
+                showMessage("No hay datos para exportar.", 'error');
+                return;
+            }
+
+            try {
+                // Create a new workbook
+                const wb = XLSX.utils.book_new();
+                
+                // Convert JSON back to worksheet
+                const ws = XLSX.utils.json_to_sheet(filteredData);
+                
+                // Append worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, "Datos Filtrados");
+
+                // Generate file and trigger download
+                const filename = `datos_limpios_${new Date().getTime()}.${format}`;
+                XLSX.writeFile(wb, filename);
+                
+                showMessage(`Archivo exportado exitosamente como ${format.toUpperCase()}`, 'success');
+            } catch (error) {
+                console.error(error);
+                showMessage("Hubo un error al exportar el archivo.", 'error');
+            }
+        }
+
+    </script>
+</body>
+</html>

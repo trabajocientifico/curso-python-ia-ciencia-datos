@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperaturas Conversor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ocultar flechas de los inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        /* Animación de entrada para la tarjeta y el texto */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        .delay-200 {
+            animation-delay: 0.2s;
+            opacity: 0; /* Mantiene oculto hasta que inicie la animación */
+        }
+
+        /* --- Animaciones del fondo con figuras --- */
+        .bg-animated {
+            background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%); /* Gradiente rojo oscuro a rojo claro */
+        }
+        
+        .shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            z-index: 0;
+        }
+
+        .shapes li {
+            position: absolute;
+            display: block;
+            list-style: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.15); /* Figuras semi-transparentes blancas */
+            animation: floatUp 25s linear infinite;
+            bottom: -150px;
+        }
+
+        /* Configuraciones individuales para cada figura (tamaño, posición, velocidad, forma) */
+        .shapes li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; border-radius: 50%; }
+        .shapes li:nth-child(2) { left: 10%; width: 30px; height: 30px; animation-delay: 2s; animation-duration: 12s; }
+        .shapes li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
+        .shapes li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; border-radius: 50%; }
+        .shapes li:nth-child(5) { left: 65%; width: 40px; height: 40px; animation-delay: 0s; }
+        .shapes li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; border-radius: 50%; }
+        .shapes li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
+        .shapes li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; border-radius: 50%; }
+        .shapes li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; }
+        .shapes li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s; animation-duration: 11s; border-radius: 50%; }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+                border-radius: 0; /* Comienzan como cuadrados o la forma base */
+            }
+            100% {
+                transform: translateY(-1200px) rotate(720deg);
+                opacity: 0;
+                border-radius: 50%; /* Se transforman en círculos al subir */
+            }
+        }
+    </style>
+</head>
+<body class="bg-animated min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800 relative overflow-hidden">
+
+    <!-- Fondo animado (capa trasera) -->
+    <ul class="shapes">
+        <li></li><li></li><li></li><li></li><li></li>
+        <li></li><li></li><li></li><li></li><li></li>
+    </ul>
+
+    <!-- Contenedor Principal (capa delantera interactiva) -->
+    <div class="relative z-10 w-full max-w-md flex flex-col items-center">
+        
+        <!-- Tarjeta del Conversor -->
+        <div class="bg-white w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+            
+            <!-- Encabezado (ahora en tonos rojos) -->
+            <div class="bg-red-800 p-6 text-center shadow-inner">
+                <h1 class="text-2xl font-bold text-white flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Temperaturas Conversor
+                </h1>
+                <p class="text-red-200 mt-2 text-sm font-medium">Ingresa un valor para convertir automáticamente</p>
+            </div>
+
+            <!-- Cuerpo con los Inputs -->
+            <div class="p-6 space-y-6">
+                
+                <!-- Input Grados Celsius -->
+                <div class="relative">
+                    <label for="celsius" class="block text-sm font-bold text-gray-700 mb-1">Grados Celsius (°C)</label>
+                    <div class="relative">
+                        <input type="number" id="celsius" placeholder="Ej: 25" 
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-lg font-medium outline-none placeholder-gray-400 shadow-sm">
+                        <span class="absolute right-4 top-3 text-red-800 font-bold text-lg">°C</span>
+                    </div>
+                </div>
+
+                <!-- Input Grados Fahrenheit -->
+                <div class="relative">
+                    <label for="fahrenheit" class="block text-sm font-bold text-gray-700 mb-1">Grados Fahrenheit (°F)</label>
+                    <div class="relative">
+                        <input type="number" id="fahrenheit" placeholder="Ej: 77" 
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-lg font-medium outline-none placeholder-gray-400 shadow-sm">
+                        <span class="absolute right-4 top-3 text-red-800 font-bold text-lg">°F</span>
+                    </div>
+                </div>
+
+                <!-- Input Kelvin -->
+                <div class="relative">
+                    <label for="kelvin" class="block text-sm font-bold text-gray-700 mb-1">Kelvin (K)</label>
+                    <div class="relative">
+                        <input type="number" id="kelvin" placeholder="Ej: 298.15" 
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-lg font-medium outline-none placeholder-gray-400 shadow-sm">
+                        <span class="absolute right-4 top-3 text-red-800 font-bold text-lg">K</span>
+                    </div>
+                </div>
+
+                <!-- Botón para limpiar -->
+                <button id="btnClear" class="w-full mt-4 py-3 px-4 bg-gray-100 hover:bg-red-50 text-red-800 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-red-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    Limpiar Valores
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Créditos -->
+        <div class="mt-8 text-white text-center animate-fade-in delay-200 drop-shadow-md">
+            <p class="text-sm opacity-90 mb-1">Creador de la aplicación:</p>
+            <p class="text-lg font-bold tracking-wide">Oscar Ivan Vargas Pineda</p>
+            <p class="text-sm opacity-80 mt-1 flex items-center justify-center gap-1">
+                <span>asistido por Gemini IA</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                </svg>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Script de Conversión -->
+    <script>
+        const celsiusInput = document.getElementById('celsius');
+        const fahrenheitInput = document.getElementById('fahrenheit');
+        const kelvinInput = document.getElementById('kelvin');
+        const btnClear = document.getElementById('btnClear');
+
+        function redondear(num) {
+            return Math.round(num * 100) / 100;
+        }
+
+        celsiusInput.addEventListener('input', function() {
+            const c = parseFloat(this.value);
+            if (isNaN(c)) {
+                fahrenheitInput.value = '';
+                kelvinInput.value = '';
+                return;
+            }
+            fahrenheitInput.value = redondear((c * 9/5) + 32);
+            kelvinInput.value = redondear(c + 273.15);
+        });
+
+        fahrenheitInput.addEventListener('input', function() {
+            const f = parseFloat(this.value);
+            if (isNaN(f)) {
+                celsiusInput.value = '';
+                kelvinInput.value = '';
+                return;
+            }
+            const c = (f - 32) * 5/9;
+            celsiusInput.value = redondear(c);
+            kelvinInput.value = redondear(c + 273.15);
+        });
+
+        kelvinInput.addEventListener('input', function() {
+            const k = parseFloat(this.value);
+            if (isNaN(k)) {
+                celsiusInput.value = '';
+                fahrenheitInput.value = '';
+                return;
+            }
+            const c = k - 273.15;
+            celsiusInput.value = redondear(c);
+            fahrenheitInput.value = redondear((c * 9/5) + 32);
+        });
+
+        btnClear.addEventListener('click', function() {
+            celsiusInput.value = '';
+            fahrenheitInput.value = '';
+            kelvinInput.value = '';
+            celsiusInput.focus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineering Dashboard - Data Science</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #080c14;
+            --bg-card: #0d1527;
+            --bg-terminal: #050911;
+            --accent-cyan: #00f2fe;
+            --accent-purple: #9d4edd;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /*--- LAYOUT ESTRUCTURAL (DASHBOARD) ---*/
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #0d1527 0%, #111a36 100%);
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .steps-menu {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .step-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .step-item:hover {
+            background-color: rgba(0, 242, 254, 0.05);
+            border-color: rgba(0, 242, 254, 0.2);
+        }
+
+        .step-item.active {
+            background: linear-gradient(90deg, rgba(0, 242, 254, 0.1) 0%, rgba(157, 78, 221, 0.1) 100%);
+            border-color: var(--accent-cyan);
+        }
+
+        .step-item .step-num {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--accent-purple);
+            font-weight: bold;
+        }
+
+        .step-item.active .step-num {
+            color: var(--accent-cyan);
+        }
+
+        .step-item .step-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /*--- CONTROL GLOBAL ---*/
+        .global-controls {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-global {
+            width: 100%;
+            background-color: #111a31;
+            border: 1px solid var(--accent-purple);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-global:hover {
+            background-color: var(--accent-purple);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 0.4);
+        }
+
+        /*--- ÁREA PRINCIPAL DE SLIDES ---*/
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(circle at 80% 20%, rgba(157, 78, 221, 0.03) 0%, transparent 50%);
+        }
+
+        .slide-panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .slide-panel.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .slide-title-area h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slide-title-area h1 span {
+            color: var(--accent-cyan);
+            font-family: 'Fira Code', monospace;
+            font-size: 20px;
+        }
+
+        .slide-title-area p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /*--- CONTENEDORES DE CONTENIDO ---*/
+        .workspace {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            flex-grow: 1;
+            height: calc(100% - 80px);
+        }
+
+        .prompt-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .prompt-box.original {
+            border-left: 4px solid #ef4444;
+            background-color: rgba(239, 68, 68, 0.02);
+        }
+
+        .box-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .original .box-label { color: #ef4444; }
+        .optimized .box-label { color: var(--accent-cyan); }
+
+        .prompt-text {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #94a3b8;
+        }
+
+        /*--- TERMINAL INTERACTIVA (EDITABLE) ---*/
+        .terminal-container {
+            background-color: var(--bg-terminal);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+        }
+
+        .terminal-container:focus-within {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.15), inset 0 0 20px rgba(0,0,0,0.6);
+        }
+
+        .terminal-header {
+            background-color: #0b111e;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.r { background-color: #ef4444; }
+        .dot.y { background-color: #eab308; }
+        .dot.g { background-color: #22c55e; }
+
+        .terminal-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .btn-copy {
+            background-color: rgba(0, 242, 254, 0.1);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background-color: var(--accent-cyan);
+            color: var(--bg-main);
+        }
+
+        .btn-copy.copied {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .terminal-body {
+            flex-grow: 1;
+            padding: 20px;
+            position: relative;
+        }
+
+        .editable-prompt {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f1f5f9;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            white-space: pre-wrap;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fa-solid fa-terminal"></i> PROMPT HUB</h2>
+            <p>Data Science Course Edition</p>
+        </div>
+        <div class="steps-menu" id="stepsMenu">
+            </div>
+        <div class="global-controls">
+            <button class="btn-global" onclick="copyEntireHTML(this)">
+                <i class="fa-solid fa-code"></i> Copiar Código HTML Presentación
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        </div>
+
+    <script>
+        // DATA CENTRALIZADA DE LOS PROMPTS
+        const dataset = [
+            {
+                id: 1,
+                title: "Carga de Datos",
+                icon: "fa-file-import",
+                desc: "Lectura robusta y validación estructural del set de datos inicial.",
+                original: "crea un código para cargar mi archivo de excel que esta en la ruta /content/drive/MyDrive/CLASE 2/datos/ventas_excel.xlsx",
+                optimized: "Por favor, escribe un código en Python usando la librería pandas para cargar un archivo de Excel.\nEl archivo está ubicado en la ruta: '/content/drive/MyDrive/CLASE 2/datos/ventas_excel.xlsx'.\nAsigna el resultado a un DataFrame llamado datos_excel y muestra las primeras 5 filas para verificar la carga."
+            },
+            {
+                id: 2,
+                title: "Auditoría de Variables",
+                icon: "fa-magnifying-glass-chart",
+                desc: "Clasificación automática de tipos de datos y mapeo de valores faltantes.",
+                original: "Crea un código que indique la cantidad de variables que tiene la base de datos cargada \"datos_excel\", cuantas son variables cualitativas, y cuantas son cuantitativas, indicara cuales son para cada una de estas. Indicame si hay datos faltantes o datos nulos en cada una de estas variables. Quiero la infomación organizada en una tabla.",
+                optimized: "Utilizando el DataFrame datos_excel, genera un script que identifique:\n1. El número total de variables (columnas).\n2. Cuáles y cuántas son variables cualitativas (categóricas).\n3. Cuáles y cuántas son cuantitativas (numéricas).\n4. La cantidad de datos nulos o faltantes por cada variable.\n\nPor favor, organiza toda esta información en una única tabla resumen (DataFrame) para facilitar su lectura."
+            },
+            {
+                id: 3,
+                title: "Consolidación de Métricas",
+                icon: "fa-table-list",
+                desc: "Refactorización de tablas de metadatos para optimizar la visualización ejecutiva.",
+                original: "quisiera que toda la información estuviera consolidada en un tabla, la informaciónd e cuales son categoricas y cuales son numericas",
+                optimized: "Modifica el código anterior para consolidación estricta de metadatos en una sola tabla limpia.\nLas columnas finales del DataFrame resultante deben ser exactamente: 'Variable', 'Tipo de Dato (Categórica/Numérica)' y 'Cantidad de Valores Nulos'."
+            },
+            {
+                id: 4,
+                title: "Análisis de Cardinalidad",
+                icon: "fa-tags",
+                desc: "Extracción y conteo unificado de etiquetas únicas de variables categóricas críticas.",
+                original: "Crea una código que muestre cuales son las etiquetas de las variables Producto y Region\n\nIndicame ademas cuantas etiquetas son para cada variable",
+                optimized: "Escribe un código eficiente que extraiga los valores únicos (etiquetas) de las variables 'Producto' y 'Region' del DataFrame.\nAdemás, incluye el conteo total (cardinalidad) de categorías distintas para cada una de estas dos variables."
+            },
+            {
+                id: 5,
+                title: "Segmentación Multi-hoja",
+                icon: "fa-file-excel",
+                desc: "Automatización de reportes mediante particionamiento lógico de datos y creación de rutas.",
+                original: "Genera un excel nuevo llamado \"productos\" y quiero que elabore una hoja con la información de cada producto.\n\nNecesito guardar el archivo en la siguiente ruta \"/content/drive/MyDrive/CLASE 2/datos\" crea una carpeta que se llame productos y en ella guarda el archivo.",
+                optimized: "Crea un script que filtre el DataFrame original por cada 'Producto' único.\nGenera un nuevo archivo de Excel llamado 'productos.xlsx' donde cada producto tenga su propia hoja independiente con sus datos correspondientes.\nGuarda este archivo en la ruta: '/content/drive/MyDrive/CLASE 2/datos/productos/'.\nSi la carpeta 'productos' no existe en el directorio, asegúrate de que el código la cree de forma automatizada mediante la librería os."
+            },
+            {
+                id: 6,
+                title: "Visualización Univariante",
+                icon: "fa-chart-area",
+                desc: "Generación automatizada de distribuciones estadísticas combinadas (Histogramas + KDE).",
+                original: "Identifica las variables numericas de la base de datos y genera un gráfico de histograma con su línea de densidad para cada variable",
+                optimized: "Identifica de forma automática las variables numéricas del DataFrame datos_excel.\nPara cada una de ellas, genera un gráfico de histograma univariante que incluya de forma superpuesta su línea de estimación de densidad de kernel (KDE).\nUtiliza las librerías matplotlib y seaborn para asegurar un diseño limpio y moderno."
+            },
+            {
+                id: 7,
+                title: "Series Temporales",
+                icon: "fa-chart-line",
+                desc: "Evolución cronológica segmentada por dimensiones geográficas.",
+                original: "Genera una gráfica de linea que muestre el comportamiento en el tiempo usando la variable Fecha, del total de ventas usando la variable Total\n\nQuiero ver el gráfico de líneas pero agrupado por Region",
+                optimized: "Genera un gráfico de líneas utilizando seaborn para analizar la evolución temporal de las ventas.\n- Eje X: Variable 'Fecha' (agrupada cronológicamente por día).\n- Eje Y: Suma acumulada diaria de la variable 'Total'.\n- Segmentación (Hue): Una línea de tendencia de distinto color para cada 'Region' geomorfológica presente."
+            },
+            {
+                id: 8,
+                title: "Estilización Gráfica (Aesthetics)",
+                icon: "fa-sliders",
+                desc: "Modificación de propiedades de objetos del lienzo (Leyendas, Ejes y Tipografías).",
+                original: "Quita el título del gráfico. Quiero en negrilla los títulos de los ejes X y Y. Quiero en negrilla el título de la Leyenda. Poner la leyenda en la parte superior del gráfico.\n\nSubir un poco la leyenda, esta sobre el recuadro del gráfico",
+                optimized: "Ajusta las propiedades estéticas del gráfico de líneas generado anteriormente:\n1. Elimina por completo el título principal del gráfico.\n2. Aplica formato de fuente en negrita (bold) a los títulos de los ejes X ('Fecha') e Y ('Total de Ventas').\n3. Coloca la leyenda en la parte superior externa del recuadro del gráfico (configura el parámetro 'bbox_to_anchor' adecuadamente para evitar solapamientos con las líneas o el marco), aplicando negrita exclusivamente al título de la leyenda ('Región')."
+            },
+            {
+                id: 9,
+                title: "Reportes Estadísticos",
+                icon: "fa-file-invoice",
+                desc: "Localización idiomática, limpieza dimensional y persistencia en disco de métricas descriptivas.",
+                original: "Genera una tabla resumen, con las estadisticas descriptivas para las variables numericas.\n\nAjusta la tabla, eliminando la columna Fecha. Quiero información en Español, y genera esta de un nuevo archivo de excel llamado \"resumen\". guardalo en /content/drive/MyDrive/CLASE 2/datos",
+                optimized: "Calcula las estadísticas descriptivas de todas las variables numéricas utilizando el método .describe() de pandas.\nAsegúrate de excluir cualquier columna de tipo fecha.\nTraduce todos los nombres de las métricas estadísticas resultantes al idioma español (ej. mapear 'mean' a 'Promedio', 'std' a 'Desviación Estándar', etc.).\nFinalmente, exporta este DataFrame estructurado a un archivo de Excel llamado 'resumen.xlsx' en la ruta exacta: '/content/drive/MyDrive/CLASE 2/datos/'."
+            },
+            {
+                id: 10,
+                title: "Modelado y Regresión",
+                icon: "fa-chart-scatter",
+                desc: "Análisis bidimensional de correlación con ajuste lineal matemático explícito.",
+                original: "Crea un gráfico de dispersión con las variables Total y Descuento_% . genera un línea de tendencia y la ecuación de la recta",
+                optimized: "Genera un gráfico de dispersión (scatter plot) utilizando variables bidimensionales donde el eje X represente 'Descuento_%' y el eje Y represente el 'Total'.\nAñade una línea de tendencia basada en un modelo de regresión lineal (color rojo distintivo) y calcula e imprime la ecuación matemática de la recta resultante de la regresión en un cuadro flotante legible dentro de la misma visualización."
+            }
+        ];
+
+        // INICIALIZACIÓN DE LA INTERFAZ
+        const menuContainer = document.getElementById('stepsMenu');
+        const mainContent = document.getElementById('mainContent');
+
+        dataset.forEach((item, index) => {
+            // Crear ítems del menú lateral
+            const menuItem = document.createElement('div');
+            menuItem.className = `step-item ${index === 0 ? 'active' : ''}`;
+            menuItem.id = `menu-step-${item.id}`;
+            menuItem.onclick = () => switchSlide(item.id);
+            menuItem.innerHTML = `
+                <span class="step-num">0${item.id}</span>
+                <i class="fa-solid ${item.icon}" style="color: var(--text-muted); font-size: 13px;"></i>
+                <span class="step-name">${item.title}</span>
+            `;
+            menuContainer.appendChild(menuItem);
+
+            // Crear paneles de los slides
+            const slidePanel = document.createElement('div');
+            slidePanel.className = `slide-panel ${index === 0 ? 'active' : ''}`;
+            slidePanel.id = `slide-${item.id}`;
+            slidePanel.innerHTML = `
+                <div class="slide-header">
+                    <div class="slide-title-area">
+                        <h1><span>Paso 0${item.id} //</span> ${item.title}</h1>
+                        <p>${item.desc}</p>
+                    </div>
+                </div>
+                <div class="workspace">
+                    <div class="prompt-box original">
+                        <div class="box-label"><i class="fa-solid fa-graduation-cap"></i> Requerimiento Inicial del Alumno</div>
+                        <div class="prompt-text">"${item.original}"</div>
+                    </div>
+                    <div class="terminal-container optimized">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <div class="dot r"></div>
+                                <div class="dot y"></div>
+                                <div class="dot g"></div>
+                            </div>
+                            <div class="terminal-title">prompt_playground.py</div>
+                            <button class="btn-copy" onclick="copyPrompt(${item.id}, this)">
+                                <i class="fa-regular fa-copy"></i> Copiar Prompt
+                            </button>
+                        </div>
+                        <div class="terminal-body">
+                            <textarea id="textarea-${item.id}" class="editable-prompt" spellcheck="false">${item.optimized}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContent.appendChild(slidePanel);
+        });
+
+        // LÓGICA DE CONTROL DE DIAPOSITIVAS
+        function switchSlide(id) {
+            document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.slide-panel').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`menu-step-${id}`).classList.add('active');
+            document.getElementById(`slide-${id}`).classList.add('active');
+        }
+
+        // LÓGICA DE COPIADO DE PROMPTS DINÁMICOS
+        function copyPrompt(id, button) {
+            const textarea = document.getElementById(`textarea-${id}`);
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                button.innerHTML = `<i class="fa-solid fa-check"></i> ¡Copiado!`;
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerHTML = `<i class="fa-regular fa-copy"></i> Copiar Prompt`;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al intentar copiar el texto: ', err);
+            });
+        }
+
+        // LÓGICA PARA COPIAR TODO EL CÓDIGO HTML DE LA APP
+        function copyEntireHTML(button) {
+            const sourceCode = document.documentElement.outerHTML;
+            navigator.clipboard.writeText(sourceCode).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = `<i class="fa-solid fa-circle-check"></i> ¡HTML Copiado al Portapapeles!`;
+                button.style.backgroundColor = 'var(--success)';
+                button.style.borderColor = 'var(--success)';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.backgroundColor = '#111a31';
+                    button.style.borderColor = 'var(--accent-purple)';
+                }, 3000);
+            });
+        }
+
+        // Soporte para navegación con teclado (Flechas Arriba / Abajo)
+        let currentActiveId = 1;
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'TEXTAREA') return; // Permitir edición normal dentro de los prompts
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                if (currentActiveId < dataset.length) {
+                    currentActiveId++;
+                    switchSlide(currentActiveId);
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                if (currentActiveId > 1) {
+                    currentActiveId--;
+                    switchSlide(currentActiveId);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

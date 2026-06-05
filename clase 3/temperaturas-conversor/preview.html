@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversor de Temperatura</title>
+
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body{
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        min-height:100vh;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+    }
+
+    .contenedor{
+        background:white;
+        padding:30px;
+        border-radius:15px;
+        width:400px;
+        box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    h1{
+        text-align:center;
+        margin-bottom:20px;
+        color:#333;
+    }
+
+    .grupo{
+        margin-bottom:15px;
+    }
+
+    label{
+        display:block;
+        margin-bottom:6px;
+        font-weight:bold;
+        color:#444;
+    }
+
+    input, select{
+        width:100%;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:8px;
+        font-size:16px;
+    }
+
+    button{
+        width:100%;
+        padding:12px;
+        background:#2196f3;
+        color:white;
+        border:none;
+        border-radius:8px;
+        font-size:16px;
+        cursor:pointer;
+        transition:0.3s;
+    }
+
+    button:hover{
+        background:#1976d2;
+    }
+
+    .resultado{
+        margin-top:20px;
+        padding:15px;
+        background:#f5f5f5;
+        border-radius:8px;
+        text-align:center;
+        font-size:18px;
+        font-weight:bold;
+        color:#333;
+    }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+    <h1>🌡 Conversor de Temperatura</h1>
+
+    <div class="grupo">
+        <label for="valor">Valor</label>
+        <input type="number" id="valor" placeholder="Ingrese temperatura">
+    </div>
+
+    <div class="grupo">
+        <label for="origen">Unidad de origen</label>
+        <select id="origen">
+            <option value="C">Celsius (°C)</option>
+            <option value="F">Fahrenheit (°F)</option>
+            <option value="K">Kelvin (K)</option>
+        </select>
+    </div>
+
+    <div class="grupo">
+        <label for="destino">Unidad de destino</label>
+        <select id="destino">
+            <option value="C">Celsius (°C)</option>
+            <option value="F">Fahrenheit (°F)</option>
+            <option value="K">Kelvin (K)</option>
+        </select>
+    </div>
+
+    <button onclick="convertir()">Convertir</button>
+
+    <div class="resultado" id="resultado">
+        Resultado: ---
+    </div>
+</div>
+
+<script>
+function convertir() {
+    const valor = parseFloat(document.getElementById("valor").value);
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
+    const resultado = document.getElementById("resultado");
+
+    if (isNaN(valor)) {
+        resultado.innerHTML = "⚠ Ingrese un valor válido";
+        return;
+    }
+
+    let celsius;
+
+    // Convertir a Celsius
+    switch (origen) {
+        case "C":
+            celsius = valor;
+            break;
+        case "F":
+            celsius = (valor - 32) * 5 / 9;
+            break;
+        case "K":
+            celsius = valor - 273.15;
+            break;
+    }
+
+    let valorFinal;
+
+    // Convertir desde Celsius a unidad destino
+    switch (destino) {
+        case "C":
+            valorFinal = celsius;
+            break;
+        case "F":
+            valorFinal = (celsius * 9 / 5) + 32;
+            break;
+        case "K":
+            valorFinal = celsius + 273.15;
+            break;
+    }
+
+    resultado.innerHTML =
+        `Resultado: ${valorFinal.toFixed(2)} °${destino === "K" ? "" : destino}${destino === "K" ? "K" : ""}`;
+}
+</script>
+
+</body>
+</html>

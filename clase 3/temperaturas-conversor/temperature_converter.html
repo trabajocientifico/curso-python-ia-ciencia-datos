@@ -1,0 +1,175 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .wrap { padding: 2rem 1.5rem; font-family: var(--font-sans); max-width: 520px; margin: 0 auto; }
+  .title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; }
+  .title-row i { font-size: 22px; color: var(--color-text-secondary); }
+  h2 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .subtitle { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 2rem; }
+  .scale-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .scale-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s; }
+  .scale-card.active { border: 1.5px solid var(--color-border-info); }
+  .scale-header { display: flex; align-items: center; justify-content: space-between; }
+  .scale-symbol { font-size: 22px; font-weight: 500; color: var(--color-text-info); line-height: 1; }
+  .scale-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .scale-input { width: 100%; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 18px; font-weight: 500; color: var(--color-text-primary); font-family: var(--font-sans); outline: none; transition: border-color 0.15s; -moz-appearance: textfield; }
+  .scale-input::-webkit-outer-spin-button, .scale-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .scale-input:focus { border-color: var(--color-border-primary); box-shadow: 0 0 0 2px rgba(55,138,221,0.12); }
+  .scale-name { font-size: 12px; color: var(--color-text-secondary); }
+  .divider { height: 0.5px; background: var(--color-border-tertiary); margin: 1.5rem 0; }
+  .reference { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+  .ref-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ref-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: var(--border-radius-md); background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); cursor: pointer; transition: background 0.1s; }
+  .ref-row:hover { background: var(--color-background-secondary); }
+  .ref-row:hover .ref-name { color: var(--color-text-info); }
+  .ref-name { font-size: 12px; color: var(--color-text-secondary); flex: 1; }
+  .ref-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); display: flex; gap: 4px; flex-shrink: 0; }
+  .ref-badge { font-size: 10px; padding: 1px 5px; border-radius: 99px; font-weight: 400; }
+  .ref-badge.c { background: #FAECE7; color: #993C1D; }
+  .ref-badge.f { background: #E6F1FB; color: #185FA5; }
+  .ref-badge.k { background: #EAF3DE; color: #3B6D11; }
+  .reset-row { display: flex; justify-content: flex-end; margin-top: 1rem; }
+  .reset-btn { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: var(--border-radius-md); transition: color 0.15s, background 0.15s; }
+  .reset-btn:hover { color: var(--color-text-primary); background: var(--color-background-secondary); }
+  .reset-btn i { font-size: 14px; }
+</style>
+<div class="wrap">
+  <h2 class="sr-only">Convertidor de temperaturas entre Celsius, Fahrenheit y Kelvin</h2>
+  <div class="title-row">
+    <i class="ti ti-thermometer" aria-hidden="true"></i>
+    <h2>Convertidor de temperatura</h2>
+  </div>
+  <p class="subtitle">Escribe en cualquier campo para convertir automáticamente</p>
+  <div class="scale-grid">
+    <div class="scale-card active" id="card-c">
+      <div class="scale-header">
+        <span class="scale-symbol">°C</span>
+      </div>
+      <input class="scale-input" type="number" id="input-c" placeholder="0" step="any">
+      <span class="scale-name">Celsius</span>
+    </div>
+    <div class="scale-card" id="card-f">
+      <div class="scale-header">
+        <span class="scale-symbol" style="color: var(--color-text-success, #3B6D11);">°F</span>
+      </div>
+      <input class="scale-input" type="number" id="input-f" placeholder="32" step="any">
+      <span class="scale-name">Fahrenheit</span>
+    </div>
+    <div class="scale-card" id="card-k">
+      <div class="scale-header">
+        <span class="scale-symbol" style="color: #639922;">K</span>
+      </div>
+      <input class="scale-input" type="number" id="input-k" placeholder="273.15" step="any">
+      <span class="scale-name">Kelvin</span>
+    </div>
+  </div>
+  <div class="reset-row">
+    <button class="reset-btn" id="reset-btn" onclick="resetAll()">
+      <i class="ti ti-refresh" aria-hidden="true"></i> Limpiar
+    </button>
+  </div>
+  <div class="divider"></div>
+  <div class="reference">
+    <div class="ref-title"><i class="ti ti-bookmark" aria-hidden="true"></i> Referencias rápidas — haz clic para cargar</div>
+    <div class="ref-grid" id="ref-grid"></div>
+  </div>
+</div>
+<script>
+const refs = [
+  { name: "Cero absoluto", c: -273.15 },
+  { name: "Congelación del agua", c: 0 },
+  { name: "Temperatura corporal", c: 37 },
+  { name: "Ebullición del agua", c: 100 },
+  { name: "Temperatura ambiente", c: 20 },
+  { name: "Punto de fusión del hierro", c: 1538 },
+];
+const inputC = document.getElementById("input-c");
+const inputF = document.getElementById("input-f");
+const inputK = document.getElementById("input-k");
+const cards = { c: document.getElementById("card-c"), f: document.getElementById("card-f"), k: document.getElementById("card-k") };
+function fmt(v) {
+  if (v === "" || v === null || isNaN(v)) return "";
+  const r = parseFloat(v.toFixed(4));
+  return String(r);
+}
+function fromC(c) {
+  return { f: c * 9/5 + 32, k: c + 273.15 };
+}
+function fromF(f) {
+  const c = (f - 32) * 5/9;
+  return { c, k: c + 273.15 };
+}
+function fromK(k) {
+  const c = k - 273.15;
+  return { c, f: c * 9/5 + 32 };
+}
+function setActive(id) {
+  Object.values(cards).forEach(c => c.classList.remove("active"));
+  cards[id].classList.add("active");
+}
+let updating = false;
+inputC.addEventListener("input", () => {
+  if (updating) return;
+  updating = true;
+  setActive("c");
+  const v = parseFloat(inputC.value);
+  if (!isNaN(v)) {
+    const r = fromC(v);
+    inputF.value = fmt(r.f);
+    inputK.value = fmt(r.k);
+  } else { inputF.value = ""; inputK.value = ""; }
+  updating = false;
+});
+inputF.addEventListener("input", () => {
+  if (updating) return;
+  updating = true;
+  setActive("f");
+  const v = parseFloat(inputF.value);
+  if (!isNaN(v)) {
+    const r = fromF(v);
+    inputC.value = fmt(r.c);
+    inputK.value = fmt(r.k);
+  } else { inputC.value = ""; inputK.value = ""; }
+  updating = false;
+});
+inputK.addEventListener("input", () => {
+  if (updating) return;
+  updating = true;
+  setActive("k");
+  const v = parseFloat(inputK.value);
+  if (!isNaN(v)) {
+    const r = fromK(v);
+    inputC.value = fmt(r.c);
+    inputF.value = fmt(r.f);
+  } else { inputC.value = ""; inputF.value = ""; }
+  updating = false;
+});
+function resetAll() {
+  inputC.value = ""; inputF.value = ""; inputK.value = "";
+  setActive("c");
+  inputC.focus();
+}
+function loadRef(c) {
+  const r = fromC(c);
+  inputC.value = fmt(c);
+  inputF.value = fmt(r.f);
+  inputK.value = fmt(r.k);
+  setActive("c");
+}
+const grid = document.getElementById("ref-grid");
+refs.forEach(ref => {
+  const r = fromC(ref.c);
+  const row = document.createElement("div");
+  row.className = "ref-row";
+  row.onclick = () => loadRef(ref.c);
+  row.innerHTML = `<span class="ref-name">${ref.name}</span>
+    <span class="ref-val">
+      <span class="ref-badge c">${fmt(ref.c)}°C</span>
+      <span class="ref-badge f">${fmt(r.f)}°F</span>
+      <span class="ref-badge k">${fmt(r.k)}K</span>
+    </span>`;
+  grid.appendChild(row);
+});
+loadRef(0);
+</script>

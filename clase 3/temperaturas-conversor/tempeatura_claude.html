@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convertidor de Temperatura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-page:        #f5f4f0;
+      --bg-card:        #ffffff;
+      --bg-surface:     #f0ede8;
+      --bg-input:       #f7f6f2;
+      --text-primary:   #1a1916;
+      --text-secondary: #6b6860;
+      --text-hint:      #a09d98;
+      --border:         rgba(26,25,22,0.10);
+      --border-focus:   #378ADD;
+      --accent-c:       #D85A30;
+      --accent-f:       #185FA5;
+      --accent-k:       #3B6D11;
+      --accent-c-bg:    #FAECE7;
+      --accent-f-bg:    #E6F1FB;
+      --accent-k-bg:    #EAF3DE;
+      --radius-md:      8px;
+      --radius-lg:      12px;
+      --radius-xl:      18px;
+      --shadow-card:    0 2px 12px rgba(0,0,0,0.07);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-page:        #1a1916;
+        --bg-card:        #242320;
+        --bg-surface:     #2c2b28;
+        --bg-input:       #2c2b28;
+        --text-primary:   #f0ede8;
+        --text-secondary: #9b9890;
+        --text-hint:      #5e5c58;
+        --border:         rgba(240,237,232,0.10);
+        --border-focus:   #85B7EB;
+        --accent-c:       #F0997B;
+        --accent-f:       #85B7EB;
+        --accent-k:       #97C459;
+        --accent-c-bg:    #3a1f14;
+        --accent-f-bg:    #0c2440;
+        --accent-k-bg:    #1a2e0a;
+        --shadow-card:    0 2px 16px rgba(0,0,0,0.30);
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem 4rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-c-bg);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--accent-c);
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      padding-left: 46px;
+    }
+
+    /* Scale Cards */
+    .scale-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .scale-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 1.1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-card);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: text;
+    }
+
+    .scale-card:hover {
+      border-color: rgba(26,25,22,0.18);
+    }
+
+    .scale-card.active-c { border-color: var(--accent-c); box-shadow: 0 0 0 3px rgba(216,90,48,0.10), var(--shadow-card); }
+    .scale-card.active-f { border-color: var(--accent-f); box-shadow: 0 0 0 3px rgba(24,95,165,0.10), var(--shadow-card); }
+    .scale-card.active-k { border-color: var(--accent-k); box-shadow: 0 0 0 3px rgba(59,109,17,0.10), var(--shadow-card); }
+
+    .scale-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .scale-symbol {
+      font-family: 'DM Mono', monospace;
+      font-size: 26px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .sym-c { color: var(--accent-c); }
+    .sym-f { color: var(--accent-f); }
+    .sym-k { color: var(--accent-k); }
+
+    .scale-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .scale-card.active-c .scale-dot { background: var(--accent-c); opacity: 1; }
+    .scale-card.active-f .scale-dot { background: var(--accent-f); opacity: 1; }
+    .scale-card.active-k .scale-dot { background: var(--accent-k); opacity: 1; }
+
+    .scale-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 9px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    .scale-input::-webkit-outer-spin-button,
+    .scale-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .scale-input:focus {
+      border-color: var(--border-focus);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.10);
+    }
+
+    .scale-input::placeholder {
+      color: var(--text-hint);
+      font-weight: 400;
+    }
+
+    .scale-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Actions */
+    .actions-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
+    }
+
+    .reset-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text-secondary);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .reset-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border-color: rgba(26,25,22,0.2);
+    }
+
+    .reset-btn i { font-size: 14px; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Formulas */
+    .formulas-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-hint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .formula-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .formula-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 6px 8px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+    }
+
+    .formula-row .from { color: var(--text-primary); font-weight: 500; }
+    .formula-row .arrow { color: var(--text-hint); }
+    .formula-row .expr { color: var(--text-secondary); }
+
+    /* References */
+    .ref-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .ref-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .ref-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ref-row:hover {
+      border-color: var(--border);
+      background: var(--bg-input);
+    }
+
+    .ref-row:hover .ref-name {
+      color: var(--text-primary);
+    }
+
+    .ref-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .ref-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+
+    .badge-c { background: var(--accent-c-bg); color: var(--accent-c); }
+    .badge-f { background: var(--accent-f-bg); color: var(--accent-f); }
+    .badge-k { background: var(--accent-k-bg); color: var(--accent-k); }
+
+    /* Footer */
+    .footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+
+    /* Responsive */
+    @media (max-width: 420px) {
+      body { padding: 1.5rem 0.75rem 3rem; }
+      .scale-grid { gap: 8px; }
+      .scale-card { padding: 0.85rem 0.75rem; }
+      .scale-symbol { font-size: 22px; }
+      .scale-input { font-size: 15px; }
+      .ref-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <div class="header-icon">
+          <i class="ti ti-thermometer" aria-hidden="true"></i>
+        </div>
+        <h1>Convertidor de temperatura</h1>
+      </div>
+      <p class="subtitle">Escribe en cualquier campo para convertir automáticamente</p>
+    </div>
+
+    <!-- Inputs -->
+    <div class="scale-grid">
+      <div class="scale-card active-c" id="card-c" onclick="document.getElementById('input-c').focus()">
+        <div class="scale-top">
+          <span class="scale-symbol sym-c">°C</span>
+          <span class="scale-dot"></span>
+        </div>
+        <input class="scale-input" type="number" id="input-c" placeholder="0" step="any" aria-label="Grados Celsius">
+        <span class="scale-name">Celsius</span>
+      </div>
+
+      <div class="scale-card" id="card-f" onclick="document.getElementById('input-f').focus()">
+        <div class="scale-top">
+          <span class="scale-symbol sym-f">°F</span>
+          <span class="scale-dot"></span>
+        </div>
+        <input class="scale-input" type="number" id="input-f" placeholder="32" step="any" aria-label="Grados Fahrenheit">
+        <span class="scale-name">Fahrenheit</span>
+      </div>
+
+      <div class="scale-card" id="card-k" onclick="document.getElementById('input-k').focus()">
+        <div class="scale-top">
+          <span class="scale-symbol sym-k">K</span>
+          <span class="scale-dot"></span>
+        </div>
+        <input class="scale-input" type="number" id="input-k" placeholder="273.15" step="any" aria-label="Kelvin">
+        <span class="scale-name">Kelvin</span>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="actions-row">
+      <button class="reset-btn" onclick="resetAll()" aria-label="Limpiar todos los campos">
+        <i class="ti ti-refresh" aria-hidden="true"></i>
+        Limpiar
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Formulas -->
+    <div class="formulas-section">
+      <div class="section-title">
+        <i class="ti ti-math-function" aria-hidden="true"></i>
+        Fórmulas de conversión
+      </div>
+      <div class="formula-list">
+        <div class="formula-row">
+          <span class="from">°C → °F</span>
+          <span class="arrow">→</span>
+          <span class="expr">(°C × 9/5) + 32</span>
+        </div>
+        <div class="formula-row">
+          <span class="from">°F → °C</span>
+          <span class="arrow">→</span>
+          <span class="expr">(°F − 32) × 5/9</span>
+        </div>
+        <div class="formula-row">
+          <span class="from">°C → K</span>
+          <span class="arrow">→</span>
+          <span class="expr">°C + 273.15</span>
+        </div>
+        <div class="formula-row">
+          <span class="from">K → °C</span>
+          <span class="arrow">→</span>
+          <span class="expr">K − 273.15</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- References -->
+    <div class="ref-section">
+      <div class="section-title">
+        <i class="ti ti-bookmark" aria-hidden="true"></i>
+        Referencias rápidas — haz clic para cargar
+      </div>
+      <div class="ref-grid" id="ref-grid"></div>
+    </div>
+
+    <div class="footer">
+      Convertidor de temperatura &mdash; HTML / JS / CSS
+    </div>
+
+  </div>
+
+  <script>
+    // ── Conversiones ──────────────────────────────────────────────────────────
+    const toF = c => c * 9 / 5 + 32;
+    const toK = c => c + 273.15;
+    const fromF = f => (f - 32) * 5 / 9;
+    const fromK = k => k - 273.15;
+
+    function fmt(v) {
+      if (v === "" || v === null || v === undefined || isNaN(v)) return "";
+      const r = parseFloat(v.toFixed(6));
+      // Eliminate trailing zeros but keep up to 4 decimals for readability
+      return String(parseFloat(r.toFixed(4)));
+    }
+
+    // ── DOM refs ──────────────────────────────────────────────────────────────
+    const inputC = document.getElementById("input-c");
+    const inputF = document.getElementById("input-f");
+    const inputK = document.getElementById("input-k");
+    const cards  = {
+      c: document.getElementById("card-c"),
+      f: document.getElementById("card-f"),
+      k: document.getElementById("card-k"),
+    };
+
+    // ── Active state ──────────────────────────────────────────────────────────
+    function setActive(id) {
+      Object.keys(cards).forEach(key => {
+        cards[key].classList.remove("active-c", "active-f", "active-k");
+      });
+      cards[id].classList.add(`active-${id}`);
+    }
+
+    // ── Update logic ──────────────────────────────────────────────────────────
+    let updating = false;
+
+    inputC.addEventListener("input", () => {
+      if (updating) return;
+      updating = true;
+      setActive("c");
+      const v = parseFloat(inputC.value);
+      if (!isNaN(v)) {
+        inputF.value = fmt(toF(v));
+        inputK.value = fmt(toK(v));
+      } else {
+        inputF.value = "";
+        inputK.value = "";
+      }
+      updating = false;
+    });
+
+    inputF.addEventListener("input", () => {
+      if (updating) return;
+      updating = true;
+      setActive("f");
+      const v = parseFloat(inputF.value);
+      if (!isNaN(v)) {
+        const c = fromF(v);
+        inputC.value = fmt(c);
+        inputK.value = fmt(toK(c));
+      } else {
+        inputC.value = "";
+        inputK.value = "";
+      }
+      updating = false;
+    });
+
+    inputK.addEventListener("input", () => {
+      if (updating) return;
+      updating = true;
+      setActive("k");
+      const v = parseFloat(inputK.value);
+      if (!isNaN(v)) {
+        const c = fromK(v);
+        inputC.value = fmt(c);
+        inputF.value = fmt(toF(c));
+      } else {
+        inputC.value = "";
+        inputF.value = "";
+      }
+      updating = false;
+    });
+
+    // ── Reset ─────────────────────────────────────────────────────────────────
+    function resetAll() {
+      inputC.value = "";
+      inputF.value = "";
+      inputK.value = "";
+      setActive("c");
+      inputC.focus();
+    }
+
+    // ── References ────────────────────────────────────────────────────────────
+    const refs = [
+      { name: "Cero absoluto",          c: -273.15 },
+      { name: "Temperatura ambiente",   c: 20      },
+      { name: "Congelación del agua",   c: 0       },
+      { name: "Temperatura corporal",   c: 37      },
+      { name: "Ebullición del agua",    c: 100     },
+      { name: "Punto de fusión del hierro", c: 1538 },
+    ];
+
+    function loadRef(c) {
+      inputC.value = fmt(c);
+      inputF.value = fmt(toF(c));
+      inputK.value = fmt(toK(c));
+      setActive("c");
+    }
+
+    const grid = document.getElementById("ref-grid");
+    refs.forEach(ref => {
+      const row = document.createElement("div");
+      row.className = "ref-row";
+      row.setAttribute("role", "button");
+      row.setAttribute("tabindex", "0");
+      row.setAttribute("aria-label", `Cargar: ${ref.name}`);
+      row.onclick = () => loadRef(ref.c);
+      row.onkeydown = e => { if (e.key === "Enter" || e.key === " ") loadRef(ref.c); };
+      row.innerHTML = `
+        <span class="ref-name">${ref.name}</span>
+        <div class="ref-badges">
+          <span class="badge badge-c">${fmt(ref.c)} °C</span>
+          <span class="badge badge-f">${fmt(toF(ref.c))} °F</span>
+          <span class="badge badge-k">${fmt(toK(ref.c))} K</span>
+        </div>`;
+      grid.appendChild(row);
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadRef(0);
+  </script>
+</body>
+</html>
